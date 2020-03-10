@@ -7,3 +7,4 @@ pymongo
 pillow
 discord-timers
 upsidedown
+numpy
