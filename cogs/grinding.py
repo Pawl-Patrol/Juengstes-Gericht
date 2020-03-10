@@ -19,7 +19,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.command(usage="craft <item>", aliases=["crafting"])
     @commands_only()
-    async def craft(self, ctx, page: int = 1):
+    async def craft(self, ctx, page: int = 0):
         """Carfting-Commands"""
         inv = self.con["inventory"].find_one({"_id": ctx.author.id})
         items = list(self.con["items"].find())
@@ -78,7 +78,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     await menu.clear_reactions()
                     return
                 await menu.remove_reaction(reaction, user)
-                if str(reaction.emoji) == reactions[0] and page > 1:
+                if str(reaction.emoji) == reactions[0] and page > 0:
                     page -= 1
                 elif str(reaction.emoji) == reactions[1] and not missing:
                     await menu.delete()
