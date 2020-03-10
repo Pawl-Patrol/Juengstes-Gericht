@@ -19,46 +19,33 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.command(usage="craft <item>", aliases=["crafting"])
     @commands_only()
-    async def craft(self, ctx, page: int = 0):
+    async def craft(self, ctx, page: int = 1):
         """Carfting-Commands"""
         inv = self.con["inventory"].find_one({"_id": ctx.author.id})
         items = list(self.con["items"].find())
         emojis = {item["_id"]: item["emoji"] for item in items}
         pages = len(self.recipes)
         if page < 1:
-            page = 0
+            page = 1
         elif page > pages:
             page = pages
 
         def create_embed(page):
-            if page == 0:
-                embed = discord.Embed(
-                    color=discord.Color.blue(),
-                    title=f"Crafting (1/{len(self.recipes)})",
-                    description=""
-                )
-                i = 2
-                for item, ingredients in self.recipes.items():
-                    ing = ' '.join([f"{c}x {emojis[i]}" for i, c in ingredients.items()])
-                    embed.description += f"\n**[{i}] {item.title()}**:\n{ing}"
-                    i += 1
-                missing = True
-            else:
-                item = list(self.recipes.keys())[page-1]
-                ingredients = self.recipes[item]
-                embed = discord.Embed(
-                    color=discord.Color.green(),
-                    title=f"{emojis[item]} {item.title()} ({page+1}/{len(self.recipes)})",
-                    description=f"❥ ~ `{ctx.prefix}craft {item}`"
-                )
-                missing = False
-                for ingredient, count in ingredients.items():
-                    amount = inv.get(ingredient, 0)
-                    embed.description += f"\n> **{amount}/{count}** {ingredient.title()} {emojis[ingredient]}"
-                    if amount < count:
-                        missing = True
-                if missing:
-                    embed.color = discord.Color.red()
+            item = list(self.recipes.keys())[page-1]
+            ingredients = self.recipes[item]
+            embed = discord.Embed(
+                color=discord.Color.green(),
+                title=f"{emojis[item]} {item.title()} ({page}/{len(self.recipes)})",
+                description=f"❥ ~ `{ctx.prefix}craft {item}`"
+            )
+            missing = False
+            for ingredient, count in ingredients.items():
+                amount = inv.get(ingredient, 0)
+                embed.description += f"\n> **{amount}/{count}** {ingredient.title()} {emojis[ingredient]}"
+                if amount < count:
+                    missing = True
+            if missing:
+                embed.color = discord.Color.red()
             return embed, missing
 
         embed, missing = create_embed(page)
@@ -78,7 +65,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     await menu.clear_reactions()
                     return
                 await menu.remove_reaction(reaction, user)
-                if str(reaction.emoji) == reactions[0] and page > 0:
+                if str(reaction.emoji) == reactions[0] and page > 1:
                     page -= 1
                 elif str(reaction.emoji) == reactions[1] and not missing:
                     await menu.delete()
