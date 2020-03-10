@@ -1,4 +1,9 @@
-git+https://github.com/Rapptz/discord.py@rewrite
+flask
+python-dotenv
+discord
+discord.py
 dnspython
-PyNaCl
-async-timeout
+pymongo
+pillow
+discord-timers
+upsidedown
