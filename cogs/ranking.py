@@ -109,7 +109,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
         menu = await ctx.send(embed=create_embed(page))
         if pages > 1:
-            reactions = ['◀', '⏹', '▶']
+            reactions = ['◀', '▶']
             for reaction in reactions:
                 await menu.add_reaction(reaction)
 
@@ -120,16 +120,13 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 try:
                     reaction, user = await ctx.bot.wait_for("reaction_add", check=check, timeout=60)
                 except asyncio.TimeoutError:
-                    await menu.delete()
+                    await menu.clear_reactions()
                     return
                 await menu.remove_reaction(reaction, user)
                 if str(reaction.emoji) == reactions[0] and page > 1:
                     page -= 1
                     await menu.edit(embed=create_embed(page))
-                elif str(reaction.emoji) == reactions[1]:
-                    await menu.delete()
-                    return
-                elif str(reaction.emoji) == reactions[2] and page < pages:
+                elif str(reaction.emoji) == reactions[1] and page < pages:
                     page += 1
                     await menu.edit(embed=create_embed(page))
 
