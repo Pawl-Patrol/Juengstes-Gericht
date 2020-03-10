@@ -181,19 +181,13 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 await ctx.send(f'Du wurdest erwischt und musstest {user.mention} **{pay}** :dollar: Strafe zahlen!')
 
     @commands.command(aliases=["claim"])
-    @commands.cooldown(1, 10, commands.BucketType.user)
+    @commands.cooldown(1, 79200, commands.BucketType.user)
     @commands_or_casino_only()
     async def daily(self, ctx):
         """Hole dir deine tägliche Belohnung ab"""
-        msg = await ctx.send(embed=discord.Embed(
-            color=discord.Color.green(),
-            title='Belohnung abgeholt',
-            description='Du hast <a:timely:681086499403333718> :dollar: erhalten :tada:'
-        ))
-        await asyncio.sleep(3)
         add = random.randint(250, 450)
         self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": add}})
-        await msg.edit(embed=discord.Embed(
+        await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title='Belohnung abgeholt',
             description=f'Du hast **{add}** :dollar: erhalten :tada:'
