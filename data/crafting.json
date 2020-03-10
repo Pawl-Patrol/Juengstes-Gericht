@@ -1,0 +1,92 @@
+{
+    "juwel": {
+        "juwelfragment": 10,
+        "sternenstaub": 3,
+        "spinnwebe": 2
+    },
+    "infinity ingot": {
+        "sternenstaub": 25,
+        "komet": 15,
+        "juwel": 10
+    },
+    "neutron ingot": {
+        "neutron nugget": 10,
+        "sternenstaub": 3,
+        "komet": 3,
+        "juwel": 3
+    },
+    "ungewöhnliche spitzhacke": {
+        "spitzhacke": 1,
+        "ziegelstein": 5,
+        "kleeblatt": 3,
+        "sternenstaub": 1
+    },
+    "seltene spitzhacke": {
+        "ungewöhnliche spitzhacke": 1,
+        "ziegelstein": 15,
+        "kleeblatt": 8,
+        "sternenstaub": 5,
+        "edelstein": 3,
+        "komet": 1
+    },
+    "legendäre spitzhacke": {
+        "seltene spitzhacke": 1,
+        "ziegelstein": 25,
+        "kleeblatt": 15,
+        "sternenstaub": 5,
+        "edelstein": 3,
+        "komet": 2,
+        "juwel": 1
+    },
+    "infinity spitzhacke": {
+        "legendäre spitzhacke": 1,
+        "seltene spitzhacke": 1,
+        "ungewöhnliche spitzhacke": 1,
+        "spitzhacke": 1,
+        "ziegelstein": 50,
+        "kleeblatt": 25,
+        "sternenstaub": 15,
+        "edelstein": 10,
+        "komet": 7,
+        "juwel": 5,
+        "infinity ingot": 3,
+        "neutron ingot": 1
+    },
+    "ungewöhnliche angel": {
+        "angel": 1,
+        "spinnwebe": 5,
+        "kleeblatt": 3,
+        "sternenstaub": 2
+    },
+    "seltene angel": {
+        "ungewöhnliche angel": 1,
+        "spinnwebe": 10,
+        "kleeblatt": 7,
+        "sternenstaub": 4,
+        "edelstein": 2,
+        "komet": 1
+    },
+    "legendäre angel": {
+        "seltene angel": 1,
+        "spinnwebe": 15,
+        "kleeblatt": 10,
+        "sternenstaub": 7,
+        "edelstein": 3,
+        "komet": 2,
+        "juwel": 1
+    },
+    "infinity angel": {
+        "legendäre angel": 1,
+        "seltene angel": 1,
+        "ungewöhnliche angel": 1,
+        "angel": 1,
+        "spinnwebe": 40,
+        "kleeblatt": 20,
+        "sternenstaub": 10,
+        "edelstein": 7,
+        "komet": 5,
+        "juwel": 3,
+        "infinity ingot": 2,
+        "neutron ingot": 1
+    }
+}

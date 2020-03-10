@@ -1,0 +1,72 @@
+{
+    "__wohnort__": {
+        "type": "single",
+        "description": "Woher kommst du?",
+        "roles": {
+            "deutschland": "\ud83c\udde9\ud83c\uddea",
+            "\u00f6sterreich": "\ud83c\udde6\ud83c\uddf9",
+            "schweiz": "\ud83c\udde8\ud83c\udded",
+            "sonstige l\u00e4nder": "\ud83c\udf10"
+        },
+        "deutschland": "\u2764\ufe0f",
+        "\u00f6sterreich": "<:uwu:661352059563409420>",
+        "schweiz": "\ud83c\udf1f",
+        "sonstige l\u00e4nder": "\ud83c\udf1f"
+    },
+    "__interessen__": {
+        "type": "multiple",
+        "description": "Was interessiert dich?",
+        "roles": {
+            "anime": "<:anime_girl_with_ok_hand:680179344168976384>",
+            "gaming": "\ud83c\udfae",
+            "musik": "\ud83c\udfb6",
+            "netflix": "<:netflix_logo:680193083656503307>",
+            "zeichnen": "\ud83c\udfa8",
+            "sport": "\ud83c\udfc3\u200d\u2642\ufe0f",
+            "literatur": "\ud83d\udcd6",
+            "programmieren": "\ud83d\udda5\ufe0f",
+            "roleplay": "\ud83c\udfad",
+            "reisen": "\ud83d\ude97"
+        }
+    },
+    "__pingrollen__": {
+        "type": "multiple",
+        "description": "Wann m\u00f6chtest du benachrichtigt werden?",
+        "roles": {
+            "neuigkeiten": "\ud83c\udf89",
+            "events": "\ud83c\udf1f",
+            "welcomer": "\ud83d\udc4b",
+            "dead chat ping": "\ud83d\udc80",
+            "voice ping": "\ud83c\udfa4"
+        }
+    },
+    "__privatnachrichten__": {
+        "type": "single",
+        "description": "D\u00fcrfen dich Mitglieder anschreiben?",
+        "roles": {
+            "offen": "\ud83d\udd13",
+            "auf anfrage": "\ud83d\udd10",
+            "geschlossen": "\ud83d\udd12"
+        }
+    },
+    "__alter__": {
+        "type": "single",
+        "description": "Wie alt bist du?",
+        "roles": {
+            "12+": "<:pat_pat:680191216830119959>",
+            "14+": "<:bulbasaur_cute:680179425949646878>",
+            "16+": "<:scooping:680179369628663826>",
+            "18+": "<:lewd_pervert:680179719031095354>",
+            "21+": "<:smirk_and_sipping:680191388637462610>"
+        }
+    },
+    "__geschlecht__": {
+        "type": "single",
+        "description": "Welches Geschlecht hast du?",
+        "roles": {
+            "m\u00e4nnlich": "<:manetti_think:681517212544008354>",
+            "weiblich": "<:huch_woah:680191419536900138>",
+            "sonstiges": "<:owo_anime_face:681143687761494018>"
+        }
+    }
+}

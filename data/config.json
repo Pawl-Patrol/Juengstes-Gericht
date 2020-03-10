@@ -1,0 +1,21 @@
+{
+  "guild_id": 680052595322388507,
+  "bot_role": 680134460095594562,
+  "serverteam_role": 680134450654478546,
+  "mute_role": 680134449610096692 ,
+  "avc_category": 680134478827487350,
+  "avc_channel": 680134572507136033,
+  "gate_channel": 680134483084574722,
+  "rules_channel": 680134485693693963,
+  "roles_channel": 680134495197724746,
+  "infos_channel": 680134488067539022,
+  "membercount_channel": 680818642094653462,
+  "commands_channel": 680134524788801536,
+  "casino_channel": 680134528190513162,
+  "raid_broadcast_channel": 680134498196914226,
+  "booster_broadcast_channel": 680134524788801536,
+  "booster_role_position": 8,
+  "welcome_message_channel": 680134510318321672,
+  "support_message": 680786379252170844,
+  "auto_info_message": 683387767606214745
+}
