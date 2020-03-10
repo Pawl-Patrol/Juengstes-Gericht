@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands, tasks, timers
 from utils.help_command import HelpCommand
 from utils.upgrades import convert_upgrade_levels
-import keep_alive
 from data.auto_info import auto_info
 import pymongo
 import os
