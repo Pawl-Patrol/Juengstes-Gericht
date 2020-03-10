@@ -39,7 +39,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 )
                 i = 2
                 for item, ingredients in self.recipes.items():
-                    ing = ' '.join([f"{c}x {items[i]}" for i, c in ingredients.items()])
+                    ing = ' '.join([f"{c}x {emojis[i]}" for i, c in ingredients.items()])
                     description += f"\n**[{i}] {item.title()}**:\n{ing}"
                     i += 1
                 missing = True
