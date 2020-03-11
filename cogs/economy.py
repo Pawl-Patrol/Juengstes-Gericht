@@ -30,8 +30,11 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def shop(self, ctx, page: int = 1):
         """Zeigt den Shop"""
 
-        shop_items = list(self.con["items"].find().sort("_id", pymongo.ASCENDING))
-
+        shop = list(self.con["items"].find().sort("_id", pymongo.ASCENDING))
+        shop_items = []
+        for item in shop:
+            if item["buy"]:
+                shop_items.append(item)
         pages, b = divmod(len(shop_items), 5)
         if b != 0:
             pages += 1
@@ -42,12 +45,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 embed = discord.Embed(color=0x983233, title=':convenience_store: Shop', description=f'Kaufe ein Item mit `{ctx.prefix}buy <item> [amount]`')
                 embed.set_footer(text=f"Seite {page} von {pages}")
                 for item in shop_items[(page - 1) * 5:(page - 1) * 5 + 5]:
-                    price = item['buy']
-                    if price:
-                        price = "$" + str(price)
-                    else:
-                        price = "N/A"
-                    embed.description += f"\n\n**{item['emoji']} {item['_id'].title()}: :inbox_tray: {price} | :outbox_tray: ${item['sell']}**\n➼ {item['description']}"
+                    embed.description += f"\n\n**{item['emoji']} {item['_id'].title()}: :inbox_tray: ${item['buy']} | :outbox_tray: ${item['sell']}**\n➼ {item['description']}"
                 return embed
 
             menu = await ctx.send(embed=create_embed(page))
