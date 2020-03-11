@@ -187,38 +187,6 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         self.con["lvlroles"].delete_many({})
         await ctx.send(f"{ctx.author.mention} Alle Levelrollen wurden erfolgreich entfernt")
 
-    @commands.command(hidden=True)
-    async def setup(self, ctx):
-        with open("data/reaction_roles.json", "r", encoding="utf8") as f:
-            reaction_roles = json.load(f)
-        f = discord.File("data/media/selfroles.png")
-        msg = await ctx.send(file=f)
-        for group in reaction_roles:
-            embed = discord.Embed(
-                color=0xff0000,
-                title=group.title(),
-                description=reaction_roles[group]["description"] + "\n"
-                )
-            for role in reaction_roles[group]["roles"]:
-                embed.description += f"\n{reaction_roles[group]['roles'][role]} **{role.title()}**"
-            msg = await ctx.send(embed=embed)
-            for role in reaction_roles[group]["roles"]:
-                await msg.add_reaction(reaction_roles[group]['roles'][role])
-            
-    @commands.command(hidden=True)
-    async def setup_rr(self, ctx):
-        with open("data/reaction_roles.json", "r", encoding="utf8") as f:
-            reaction_roles = json.load(f)
-        for group in reaction_roles:
-            msg = await ctx.send(f"**{group.title()}**")
-            for role in reaction_roles[group]["roles"]:
-                await msg.edit(content=f"**{group.title()}**\nReagiere mit einem Emoji für *{role}*")
-                reaction, user = await self.bot.wait_for("reaction_add", check=lambda r, u: r.message.id == msg.id)
-                reaction_roles[group]["roles"][role] = str(reaction.emoji)
-            with open('data/reaction_roles.json', 'w', encoding="utf8") as f:
-                json.dump(reaction_roles, f, indent=4)
-        await ctx.send("Fertig!")
-
 
 def setup(bot):
     bot.add_cog(Ranking(bot))
