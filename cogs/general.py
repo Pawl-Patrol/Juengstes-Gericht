@@ -293,32 +293,6 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {"power": amount}})
             await ctx.send(f"{ctx.author.mention} Du hast deinen Geldregen auf **Level {level}** erweitert")
 
-    @commands.command(aliases=["prefix"])
-    async def setprefix(self, ctx, *, prefix=""):
-        """Legt einen Prefix nur für dich fest"""
-        with open("data/prefixes.json", "r") as f:
-            prefixes = json.load(f)
-        if prefix == "":
-            if str(ctx.author.id) in prefixes:
-                await ctx.send(f"{ctx.author.mention} Dein Prefix ist `{prefixes[str(ctx.author.id)]}`")
-            else:
-                await ctx.send(f"{ctx.author.mention} Du hast keinen eigenen Prefix.")
-        else:
-            prefixes[str(ctx.author.id)] = prefix
-            with open("data/prefixes.json", "w") as f:
-                json.dump(prefixes, f, indent=4)
-            await ctx.send(f"{ctx.author.mention} Dein Prefix ist jetzt `{prefix}`.")
-
-    @commands.command()
-    async def delprefix(self, ctx):
-        """Entfernt deinen persönlichen Prefix"""
-        with open("data/prefixes.json", "r") as f:
-            prefixes = json.load(f)
-        prefixes.pop(str(ctx.author.id))
-        with open("data/prefixes.json", "w") as f:
-            json.dump(prefixes, f, indent=4)
-        await ctx.send(f"{ctx.author.mention} Dein Prefix wurde gelöscht.")
-
     @commands.group(usage='todo [add|remove|clear]', case_insensitive=True)
     async def todo(self, ctx):
         """Deine Todo-Liste"""
