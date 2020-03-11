@@ -207,7 +207,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             "sell": sell,
             "description": description
         }
-        self.con["tools"].update({"_id": item.lower()}, post, upsert=True)
+        self.con["items"].update({"_id": item.lower()}, post, upsert=True)
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title="Item hinzugefügt",
