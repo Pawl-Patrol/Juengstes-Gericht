@@ -61,7 +61,11 @@ class is_item(commands.Converter):
         if item:
             return item
         else:
-            raise commands.BadArgument('Item konnte nicht gefunden werden')
+            item = con["tools"].find_one({"_id": argument.lower()})
+            if item:
+                return item
+            else:
+                raise commands.BadArgument('Item konnte nicht gefunden werden')
 
 
 class is_buyable_item(commands.Converter):
