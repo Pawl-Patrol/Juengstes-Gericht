@@ -23,7 +23,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         """Setzt eine Afk-Nachricht, die andere sehen werden, wenn sie dich pingen"""
         self.con["afk"].update({"_id": ctx.author.id}, {
             "message": message,
-            "time": datetime.datetime.now()
+            "time": datetime.datetime.utcnow()
         }, upsert=True)
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
