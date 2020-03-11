@@ -4,7 +4,6 @@ from main import connection
 from utils.checks import commands_or_casino_only, owner_only, has_item
 from utils.converters import is_buyable_item, is_item
 import pymongo
-import random
 import datetime
 import asyncio
 
@@ -42,8 +41,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f'Seite nicht gefunden. Verfügbare Seiten: `{pages}`')
         else:
             def create_embed(page):
-                embed = discord.Embed(color=0x983233, title=':convenience_store: Shop',
-                                    description=f'Kaufe ein Item mit `{ctx.prefix}buy <item> [amount]`')
+                embed = discord.Embed(color=0x983233, title=':convenience_store: Shop', description=f'Kaufe ein Item mit `{ctx.prefix}buy <item> [amount]`')
                 embed.set_footer(text=f"Seite {page} von {pages}")
                 for item in shop_items[(page - 1) * 5:(page - 1) * 5 + 5]:
                     price = item['buy']
@@ -126,7 +124,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.command(usage="inventory [page]", aliases=["inv"])
     @commands.cooldown(1, 3, commands.BucketType.user)
-    #@commands_or_casino_only()
+    @commands_or_casino_only()
     async def inventory(self, ctx, user: discord.User = None):
         """Zeigt dein Inventar"""
         if user is None:
@@ -153,17 +151,17 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 embed = discord.Embed(color=0x983233,
                                       title=f":open_file_folder: {user.name}'s Inventar ({p}/{pages})",
                                       description="")
-                for i, entry in enumerate(results):
-                    if entry == "_id":
+                for i, item in enumerate(results):
+                    if item == "_id":
                         continue
                     elif i < (page - 1) * 10 + 1:
                         continue
                     elif i > (page - 1) * 10 + 10:
                         continue
-                    elif results[entry] == 0:
+                    elif results[item] == 0:
                         continue
                     else:
-                        embed.description += f"\n> **{results[entry]}x {entry.title()} {items[entry]['emoji']}**"
+                        embed.description += f"\n> **{results[item]}x {item.title()} {items[item]['emoji']}**"
                 embed.set_footer(text=f"➼ Gesamtwert: {value}")
                 return embed
 
@@ -208,6 +206,23 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             description=f"Name: **{item.title()}**\nEmoji: {emoji}\nPreis: **{buy}**\nVerkaufspreis: **{sell}**\nBeschreibung: {description}"
         ))
 
+    @commands.command(usage="addtool <Name> <Emoji> <Verkaufspreis> <Beschreibung>")
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @owner_only()
+    async def addtool(self, ctx, item: str, emoji: str, sell: int, *, description: str):
+        """Fügt ein Item hinzu"""
+        post = {
+            "emoji": emoji,
+            "sell": sell,
+            "description": description
+        }
+        self.con["tools"].update({"_id": item.lower()}, post, upsert=True)
+        await ctx.send(embed=discord.Embed(
+            color=discord.Color.green(),
+            title="Tool hinzugefügt",
+            description=f"Name: **{item.title()}**\nEmoji: {emoji}\nVerkaufspreis: **{sell}**\nBeschreibung: {description}"
+        ))
+
     @commands.command(usage="delitem <item>")
     @commands.cooldown(1, 3, commands.BucketType.user)
     @owner_only()
@@ -248,41 +263,6 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def on_boost_expire(self, user):
         """Wird aufgerufen, wenn der XP-Boost eines Nutzers abgelaufen ist"""
         self.con["stats"].update({"_id": user.id}, {"$set": {"multiplier": 1}})
-
-    @use.command(usage="open lootcrate <amount>", aliases=["lootbox", "crate"], enabled=False)
-    @has_item("lootcrate")
-    async def lootcrate(self, ctx, amount: int = 1):
-        """Öffnet eine Lootbox"""
-        possible_items = ["boost", "pickaxe"]
-        items = list(self.con["items"].find())
-        emojis = {}
-        for item in items:
-            emojis[item["_id"]] = item["emoji"]
-        cash = 0
-        rewards = {}
-        embed = discord.Embed(
-            color = discord.Color.green()
-        )
-        for i in range(amount):
-            cash += random.randint(150, 250)
-            reward = random.choice(possible_items)
-            if reward in rewards:
-                rewards[reward] += 1
-            else:
-                rewards[reward] = 1
-            embed.title=f":package: {i+1}x Lootcrate"
-            embed.description = f"> +{cash} **Dollar** :dollar:"
-            for item, count in rewards.items():
-                emoji = emojis[item]
-                embed.description += f"\n> {count}x **{item.title()}** {emoji}"
-            if i == 0:
-                msg = await ctx.send(embed=embed)
-            else:
-                await msg.edit(embed=embed)
-            await asyncio.sleep(2.5)
-        remove_item(ctx.author, "lootcrate", amount)
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
-        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": rewards}, upsert=True)
 
     @commands.command(usage="transferitem <user> <item>", aliases=["giveitem"])
     @commands.cooldown(1, 3, commands.BucketType.user)
