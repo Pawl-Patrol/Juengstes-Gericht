@@ -32,11 +32,9 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
         shop_items = list(self.con["items"].find().sort("_id", pymongo.ASCENDING))
 
-        a, b = divmod(len(shop_items), 5)
-        if b == 0:
-            pages = a
-        else:
-            pages = a + 1
+        pages, b = divmod(len(shop_items), 5)
+        if b != 0:
+            pages += 1
         if page > pages or page < 1:
             await ctx.send(f'Seite nicht gefunden. Verfügbare Seiten: `{pages}`')
         else:
