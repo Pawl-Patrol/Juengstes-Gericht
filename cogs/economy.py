@@ -124,7 +124,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.command(usage="inventory [page]", aliases=["inv"])
     @commands.cooldown(1, 3, commands.BucketType.user)
-    @commands_or_casino_only()
+    #@commands_or_casino_only()
     async def inventory(self, ctx, user: discord.User = None):
         """Zeigt dein Inventar"""
         if user is None:
@@ -138,10 +138,16 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             ))
         else:
             items = {i["_id"]: i for i in list(self.con["items"].find())}
+            tools = {i["_id"]: i for i in list(self.con["tools"].find())}
             value = 0
             for entry in results:
-                if entry != "_id":
-                    value += items[entry]["sell"] * results[entry]
+                if entry == "_id":
+                    continue
+                if entry in tools:
+                    sell = tools[entry]["sell"]
+                else:
+                    sell = items[entry]["sell"]
+                value += sell * results[entry]
             page = 1
             pages, b = divmod(len(results) - 1, 10)
             if b != 0:
@@ -161,7 +167,11 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     elif results[item] == 0:
                         continue
                     else:
-                        embed.description += f"\n> **{results[item]}x {item.title()} {items[item]['emoji']}**"
+                        if item in tools:
+                            emoji = tools[item]['emoji']
+                        else:
+                            emoji = items[item]['emoji']
+                        embed.description += f"\n> **{results[item]}x {item.title()} {emoji}**"
                 embed.set_footer(text=f"➼ Gesamtwert: {value}")
                 return embed
 
@@ -199,7 +209,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             "sell": sell,
             "description": description
         }
-        self.con["items"].update({"_id": item.lower()}, post, upsert=True)
+        self.con["tools"].update({"_id": item.lower()}, post, upsert=True)
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title="Item hinzugefügt",
