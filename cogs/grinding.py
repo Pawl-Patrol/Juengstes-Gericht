@@ -41,6 +41,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     copy = [k for k in ingredients.keys()]
                     for ingredient in copy:
                         if ingredient in tools:
+                            print(ingredient)
                             ingredients.pop(ingredient)
                     lines, remainer = divmod(len(ingredients), 5)
                     if remainer != 0:
@@ -76,7 +77,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             for group in self.recipes.values():
                 for name, recipe in group.items():
                     recipes[name] = recipe
-            print(recipes)
             args = args.split("=")
             if len(args) == 1:
                 args.append(1)
@@ -118,7 +118,10 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         await msg.clear_reactions()
                         return
                     inc[item.lower()] = amount
-                    self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc, "$unset": unset}, upsert=True)
+                    if unset:
+                        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc, "$unset": unset}, upsert=True)
+                    else:
+                        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc   }, upsert=True)
                     await msg.edit(embed=discord.Embed(
                         color=discord.Color.green(),
                         title="Crafting erfolgreich!",
