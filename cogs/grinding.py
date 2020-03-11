@@ -39,6 +39,11 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     description=f"Benutze `{ctx.prefix}craft item`, um ein Item zu craften.\nWenn du mehrere Items auf einmal craften möchtest, benutze `{ctx.prefix}craft item=3`\n"
                 )
                 for crafting_item, ingredients in [(a, b) for a, b in self.recipes.items()][p * 5:p * 5 + 5]:
+                    copy = [k for k in ingredients.keys()]
+                    for ingredient in copy:
+                        print(ingredient)
+                        if ingredient in tools:
+                            ingredients.pop(ingredient)
                     lines, remainer = divmod(len(ingredients), 5)
                     if remainer != 0:
                         lines += 1
@@ -46,8 +51,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     for i in range(lines):
                         ing = []
                         for ingredient, count in list(ingredients.items())[i * 5:i * 5 + 5]:
-                            if ingredient in tools:
-                                continue
                             ing.append(f"{count}x {emojis[ingredient]}")
                         recipe += "\n> " + " ".join(ing)
                     embed.description += f"\n**» {emojis[crafting_item]} __{crafting_item.title()}__**:{recipe}"
