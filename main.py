@@ -261,7 +261,7 @@ class Bot(commands.Bot):
             color=discord.Color.blue(),
             title='Willkommen zurück',
             description=f'{member.mention} Deine AFK-Nachricht wurde aufgehoben'),
-            delete_after=3)
+            delete_after=5)
 
     async def check_afk(self, user, channel):
         """Schaut, ob der User AFK ist und sendet ggf. seine AFK-Nachricht"""
@@ -273,7 +273,7 @@ class Bot(commands.Bot):
                 description=afk["message"],
                 timestamp=afk["time"]
             )
-            await channel.send(embed=embed, delete_after=8)
+            await channel.send(embed=embed, delete_after=10)
 
     @tasks.loop(minutes=10)
     async def income(self):
