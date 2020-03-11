@@ -354,6 +354,39 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         else:
             await ctx.send(f"{ctx.author.mention} Du hast keine Todo-Liste!")
 
+    @commands.command(usage="iteminfo <item>")
+    @commands.cooldown(1, 5, commands.BucketType.user)
+    async def iteminfo(self, ctx, *, item: str):
+        """Zeigt dir Informationen über ein Item"""
+        async with ctx.typing():
+            item = item.lower()
+            result1 = self.con["items"].find_one({"_id": item})
+            result2 = self.con["tools"].find_one({"_id": item})
+            result3 = self.con["mine-drops"].find_one({"_id": item})
+            result4 = self.con["fish-drops"].find_one({"_id": item})
+            items = list(self.con["items"].find())
+            emojis = {item["_id"]: item["emoji"] for item in items}
+            embed = discord.Embed(
+                color=discord.Color.blurple(),
+                title=f"__Infos über {item.title()}__"
+            )
+            if not result1 and not result2:
+                await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
+                return
+            if result1:
+                result = result1
+                description = f"\n**Verkaufspreis**: {result['sell']} Dollar"
+            else:
+                result = result2
+                description = ""
+                if result3 or result4:
+                    item = result3 or result4
+                    description += f"\n**Bruch-Wahrscheinlichkeit**: {item['break'] * 100}%\n**Geld-Drops**: {item['cash']} Dollar\n**Item-Drops**: {item['items']} Items\n\n:bar_chart: **Item-Drop-Wahrscheinlichkeiten**:"
+                    for drop, prop in reversed(list(item["props"].items())):
+                        description += f"\n> {emojis[drop]} **{drop}** - {int(prop*100)}%"
+            embed.description = f"**Beschreibung**: {result['description']}\n**Emoji**: {result['emoji']}\n**Einkaufspreis**: {result['buy']} Dollar" + description
+            await ctx.send(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(General(bot))
