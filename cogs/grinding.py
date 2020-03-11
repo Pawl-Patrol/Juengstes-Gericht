@@ -132,13 +132,14 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands_only()
     async def mine(self, ctx):
         """Baue Resourcen ab und bekomme Items"""
-        pickaxes = ["infinity spitzhacke", "pauls spitzhacke", "stern spitzhacke", "komet spitzhacke", "neutron spitzhacke"]
+        pickaxes = ["infinity spitzhacke", "neutron spitzhacke", "komet spitzhacke", "stern spitzhacke", "pauls spitzhacke"]
         inv = self.con["inventory"].find_one({"_id": ctx.author.id})
         for pickaxe in pickaxes:
             if pickaxe in inv:
                 break
         else:
             await ctx.send(f"{ctx.author.mention} Du brauchst eine Spitzhacke, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
+            return
         items = list(self.con["items"].find())
         tools = list(self.con["tools"].find())
         emojis = {item["_id"]: item["emoji"] for item in items + tools}
@@ -149,7 +150,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
             color = discord.Color.green(),
-            title=f"{emojis[pickaxe]} ***Du hast Mineralien abgebaut*** ({pickaxe.title()})",
+            title=f"{emojis[pickaxe]} ***Du hast ein paar Items abgebaut!*** ({pickaxe.title()})",
             description=f"> +{cash} **Dollar** :dollar:"
         )
         rewards = numpy.random.choice(list(tool["props"].keys()), drops, p=list(tool["props"].values()))
@@ -161,6 +162,45 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         if random.random() < tool["break"]:
             embed.description += f"\n:worried: **Beim Abbauen ist deine Spitzhacke kaputt gegangen!** ({int(tool['break']*100)}% Chance)"
             remove_item(ctx.author, pickaxe, 1)
+        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
+        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    @commands_only()
+    async def fish(self, ctx):
+        """Fische nach Resourcen und bekomme Items"""
+        fishing_rods = ["infinity angel", "neutron angel", "komet angel", "stern angel", "zanas angel"]
+        inv = self.con["inventory"].find_one({"_id": ctx.author.id})
+        for fishing_rod in fishing_rods:
+            if fishing_rod in inv:
+                break
+        else:
+            await ctx.send(f"{ctx.author.mention} Du brauchst eine Angel, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
+            return
+        items = list(self.con["items"].find())
+        tools = list(self.con["tools"].find())
+        emojis = {item["_id"]: item["emoji"] for item in items + tools}
+        tool = self.con["fish-drops"].find_one({"_id": fishing_rod})
+        cash = tool["cash"].split("-")
+        cash = random.randint(int(cash[0]), int(cash[1]))
+        drops = tool["items"].split("-")
+        drops = random.randint(int(drops[0]), int(drops[1]))
+        embed = discord.Embed(
+            color = discord.Color.green(),
+            title=f"{emojis[fishing_rod]} ***Du hast nach Items gefischt!*** ({fishing_rod.title()})",
+            description=f"> +{cash} **Dollar** :dollar:"
+        )
+        rewards = numpy.random.choice(list(tool["props"].keys()), drops, p=list(tool["props"].values()))
+        loot = {}
+        for reward in rewards:
+            loot[reward] = loot.get(reward, 0) + 1
+        for item, count in loot.items():
+            embed.description += f"\n> {count}x **{item.title()}** {emojis[item]}"
+        if random.random() < tool["break"]:
+            embed.description += f"\n:worried: **Beim Abbauen ist deine Angel kaputt gegangen!** ({int(tool['break']*100)}% Chance)"
+            remove_item(ctx.author, fishing_rod, 1)
         self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
         self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
         await ctx.send(embed=embed)
