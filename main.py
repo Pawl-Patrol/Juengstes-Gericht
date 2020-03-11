@@ -15,8 +15,8 @@ import asyncio
 connection = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
 
 
-def prefix_callable(b):
-    user_id = b.user.id
+def prefix_callable(bot, msg):
+    user_id = bot.user.id
     return [f'<@!{user_id}> ', f'<@{user_id}> ', 'ok ']
 
 
