@@ -58,5 +58,46 @@
             "infinity ingot": 3,
             "neutron ingot": 1
         }
+    },
+    "angeln":
+    {
+        "stern angel": {
+            "zanas angel": 1,
+            "ziegelstein": 5,
+            "kleeblatt": 3,
+            "sternenstaub": 1
+        },
+        "komet angel": {
+            "stern angel": 1,
+            "ziegelstein": 15,
+            "kleeblatt": 8,
+            "sternenstaub": 5,
+            "edelstein": 3,
+            "komet": 1
+        },
+        "neutron angel": {
+            "komet angel": 1,
+            "ziegelstein": 25,
+            "kleeblatt": 15,
+            "sternenstaub": 5,
+            "edelstein": 3,
+            "komet": 2,
+            "juwel": 1,
+            "neutron ingot": 1
+        },
+        "infinity angel": {
+            "neutron angel": 1,
+            "komet angel": 1,
+            "stern angel": 1,
+            "zanas angel": 1,
+            "ziegelstein": 50,
+            "kleeblatt": 25,
+            "sternenstaub": 15,
+            "edelstein": 10,
+            "komet": 7,
+            "juwel": 5,
+            "infinity ingot": 3,
+            "neutron ingot": 1
+        }
     }
 }
