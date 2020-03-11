@@ -85,7 +85,7 @@ class Bot(commands.Bot):
 
         elif int(time.time()) - stats["message_cd"] > 60:
             level, xp, cap = lvlcalc(stats["total_xp"])
-            added_xp = await self.add_xp(ctx.author, level, exp_type="message_xp")
+            added_xp = await self.add_xp(ctx.author, exp_type="message_xp")
             if xp + added_xp >= cap:
                 await message.add_reaction("⭐")
                 if level:
@@ -107,7 +107,6 @@ class Bot(commands.Bot):
                 await self.guess_event(ctx.channel)
             elif chance == 1:
                 await self.code_event(ctx.channel)
-            
 
     async def code_event(self, channel):
         self.last_event = int(time.time())
@@ -122,7 +121,7 @@ class Bot(commands.Bot):
         msg = await channel.send(file=f, embed=embed)
         while True:
             try:
-                m = await self.wait_for("message", check=lambda m: m.channel.id == channel.id, timeout=20)
+                m = await self.wait_for("message", check=lambda message: message.channel.id == channel.id, timeout=20)
             except asyncio.TimeoutError:
                 await msg.delete()
                 return
@@ -137,7 +136,6 @@ class Bot(commands.Bot):
             }})
         await m.delete()
         await channel.send(f"{m.author.mention} hat **50** :dollar: & **100** XP bekommen!", delete_after=10)
-
 
     async def guess_event(self, channel):
         self.last_event = int(time.time())
@@ -154,14 +152,14 @@ class Bot(commands.Bot):
         ))
         while True:
             try:
-                m = await self.wait_for("message", check=lambda m: m.channel.id == channel.id, timeout=20)
+                m = await self.wait_for("message", check=lambda message: message.channel.id == channel.id, timeout=20)
             except asyncio.TimeoutError:
                 await msg.delete()
                 await channel.send(embed=discord.Embed(
                     color=discord.Color.red(),
                     title="Zeit abgelaufen!",
                     description=f"Die Zeit ist abgelaufen! Die Lösung war: `{word}`"
-                ), delete_after = 10)
+                ), delete_after=10)
                 return
             if m.content.lower() == word.lower():
                 await msg.delete()
@@ -198,7 +196,7 @@ class Bot(commands.Bot):
         }
         self.con["upgrades"].insert_one(upgrades)
 
-    async def add_xp(self, member, level, exp_type):
+    async def add_xp(self, member, exp_type):
         """Gibt dem Member XP und Geld"""
         u = self.con["upgrades"].find_one({"_id": member.id})
         xp_mult = self.con["stats"].find_one({"_id": member.id})["multiplier"]
@@ -302,7 +300,7 @@ class Bot(commands.Bot):
                         continue
                     stats = self.con["stats"].find_one({"_id": member.id})
                     level, xp, cap = lvlcalc(stats["total_xp"])
-                    added_xp = await self.add_xp(member, level, exp_type="voice_xp")
+                    added_xp = await self.add_xp(member, exp_type="voice_xp")
                     if xp + added_xp >= cap and level:
                         await self.new_lvlrole(guild, member, None, level=level)
 
@@ -454,7 +452,6 @@ class Bot(commands.Bot):
                                 await member.remove_roles(other_role)
             # Add the reactionrole
             reaction_role = self.get_role_with_emoji(group, payload.emoji, guild)
-            #if reaction_role not in member.roles:
             await member.add_roles(reaction_role)
 
     async def on_raw_reaction_remove(self, payload):
