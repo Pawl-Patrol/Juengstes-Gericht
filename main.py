@@ -459,7 +459,6 @@ class Bot(commands.Bot):
             member, guild, channel, message = await self.process_payload(payload)
         except:
             return
-        member, guild, channel, message = await self.process_payload(payload)
         if guild is None:
             return
         if member.bot:
