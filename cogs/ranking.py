@@ -72,7 +72,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     mask_draw.ellipse([(0, 0), im.size], fill=255)
                     img.paste(rgb_avatar, (1450, 70), mask=mask)
             img.save('data/media/rank_gen.png')
-            file = discord.File("generated_data/rank_gen.png")
+            file = discord.File("data/media/rank_gen.png")
             await ctx.send(file=file, content=f":clipboard: | **Rang von {user}**")
 
     @commands.command(usage='leaderboard [page]', aliases=['lb', 'top'])
