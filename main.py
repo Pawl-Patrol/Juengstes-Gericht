@@ -15,17 +15,9 @@ import asyncio
 connection = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
 
 
-def prefix_callable(bot, msg):
-    user_id = bot.user.id
-    base = [f'<@!{user_id}> ', f'<@{user_id}> ', 'ok ']
-    with open("data/prefixes.json", "r") as f:
-        prefixes = json.load(f)
-    if str(msg.author.id) in prefixes:
-        prefix = prefixes[str(msg.author.id)]
-        if prefix[-1] != " ":
-            base.append(prefix + " ")
-        base.append(prefix)
-    return base
+def prefix_callable(b):
+    user_id = b.user.id
+    return [f'<@!{user_id}> ', f'<@{user_id}> ', 'ok ']
 
 
 class Bot(commands.Bot):
