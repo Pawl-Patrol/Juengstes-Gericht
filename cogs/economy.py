@@ -30,7 +30,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def shop(self, ctx, page: int = 1):
         """Zeigt den Shop"""
 
-        shop = list(self.con["items"].find().sort("_id", pymongo.ASCENDING))
+        shop = list(self.con["items"].find()) + list(self.con["tools"].find({"buy": {"$gt": 0}}))
         shop_items = []
         for item in shop:
             if item["buy"]:
