@@ -1,8 +1,7 @@
 import discord
-from discord import Embed
 from discord.ext import commands
 from main import connection
-from utils.checks import commands_only, has_any_item
+from utils.checks import commands_only
 from cogs.economy import remove_item
 import random
 import numpy
@@ -19,7 +18,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             self.recipes = json.load(f)
 
     @commands.command(usage="craft <item>", aliases=["crafting"])
-    #@commands_only()
+    @commands_only()
     async def craft(self, ctx, *, args: str = None):
         """Carfting-Commands"""
         inv = self.con["inventory"].find_one({"_id": ctx.author.id})
@@ -94,13 +93,16 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     description=""
                 )
                 missing = False
-                result = {}
+                inc = {}
+                unset = {}
                 for ingredient, count in recipe.items():
                     count = count * amount
-                    result[ingredient] = -count
                     inv_count = inv.get(ingredient, 0)
-                    if inv_count >= count:
+                    if inv_count > count:
                         inv_count = count
+                        inc[ingredient] = -count
+                    elif count == inv_count:
+                        unset[ingredient] = 1
                     else:
                         missing = True
                     embed.description += f"\n> **{inv_count}/{count}** {ingredient} {emojis[ingredient]}"
@@ -115,8 +117,8 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     except asyncio.TimeoutError:
                         await msg.clear_reactions()
                         return
-                    result[item.lower()] = amount
-                    self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": result})
+                    inc[item.lower()] = amount
+                    self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc, "$unset": unset}, upsert=True)
                     await msg.edit(embed=discord.Embed(
                         color=discord.Color.green(),
                         title="Crafting erfolgreich!",
@@ -128,89 +130,40 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.command()
     @commands.cooldown(1, 300, commands.BucketType.user)
     @commands_only()
-    @has_any_item(["spitzhacke", "ungewöhnliche spitzhacke", "seltene spitzhacke", "legendäre spitzhacke", "infiniy spitzhacke"])
     async def mine(self, ctx):
         """Baue Resourcen ab und bekomme Items"""
-        pickaxes = {
-            "infinity spitzhacke": 5,
-            "legendäre spitzhacke": 4,
-            "seltene spitzhacke": 3,
-            "ungewöhnliche spitzhacke": 2,
-            "spitzhacke": 1
-        }
-        items = list(self.con["items"].find())
-        emojis = {item["_id"]: item["emoji"] for item in items}
+        pickaxes = ["infinity spitzhacke", "pauls spitzhacke", "stern spitzhacke", "komet spitzhacke", "neutron spitzhacke"]
         inv = self.con["inventory"].find_one({"_id": ctx.author.id})
-        for pickaxe, mult in pickaxes.items():
+        for pickaxe in pickaxes:
             if pickaxe in inv:
                 break
-        cash = random.randint(5*mult, 5*mult)
-        embed = discord.Embed(
-            color = discord.Color.green(),
-            title=f"***Du hast Mineralien abgebaut***",
-            description = f"> +{cash} **Dollar** :dollar:"
-        )
-        loot = self.get_random_items(times=mult)
-        for item, count in loot.items():
-            embed.description += f"\n> {count}x **{item.title()}** {emojis[item]}"
-        if random.randint(0, 8*mult*mult) == 0:
-            embed.description += "\n:worried: **Beim Abbauen ist deine Spitzhacke kaputt gegangen!**"
-            remove_item(ctx.author, pickaxe, 1)
-        await ctx.send(embed=embed)
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
-        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
-
-    @commands.command()
-    @commands.cooldown(1, 300, commands.BucketType.user)
-    @commands_only()
-    @has_any_item(["angel", "ungewöhnliche angel", "seltene angel", "legendäre angel", "infinity angel"])
-    async def fish(self, ctx):
-        """Fische nach Resourcen"""
-        rods = {
-            "infinity angel": 5,
-            "legendäre angel": 4,
-            "seltene angel": 3,
-            "ungewöhnliche angel": 2,
-            "angel": 1
-        }
+        else:
+            await ctx.send(f"{ctx.author.mention} Du brauchst eine Spitzhacke, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
         items = list(self.con["items"].find())
-        emojis = {item["_id"]: item["emoji"] for item in items}
-        inv = self.con["inventory"].find_one({"_id": ctx.author.id})
-        for rod, mult in rods.items():
-            if rod in inv:
-                break
-        cash = random.randint(15*mult, 25*mult)
+        tools = list(self.con["tools"].find())
+        emojis = {item["_id"]: item["emoji"] for item in items + tools}
+        tool = self.con["mine-drops"].find_one({"_id": pickaxe})
+        cash = tool["cash"].split("-")
+        cash = random.randint(int(cash[0]), int(cash[1]))
+        drops = tool["items"].split("-")
+        drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
             color = discord.Color.green(),
-            title=f"***Du hast ein paar Items gefischt***",
-            description = f"> +{cash} **Dollar** :dollar:"
+            title=f"{emojis[pickaxe]} ***Du hast Mineralien abgebaut*** ({pickaxe.title()})",
+            description=f"> +{cash} **Dollar** :dollar:"
         )
-        loot = self.get_random_items(times=mult)
-        for item, count in loot.items():
-            embed.description += f"\n> {count}x **{item.title()}** {emojis[item]}"
-        if random.randint(0, 8*mult) == 0:
-            embed.description += "\n:worried: **Beim Angeln ist deine Angel kaputt gegangen!**"
-            remove_item(ctx.author, rod, 1)
-        await ctx.send(embed=embed)
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
-        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
-
-    def get_random_items(self, times):
-        drops = {
-            "neutron nugget": 0.02,
-            "komet": 0.03,
-            "edelstein": 0.05,
-            "sternenstaub": 0.07,
-            "juwelfragment": 0.13,
-            "kleeblatt": 0.2,
-            "spinnwebe": 0.2,
-            "ziegelstein": 0.3,
-        }
+        rewards = numpy.random.choice(list(tool["props"].keys()), drops, p=list(tool["props"].values()))
         loot = {}
-        rewards = numpy.random.choice(list(drops.keys()), random.randint(1*times, 3*times), p=list(drops.values()))
         for reward in rewards:
             loot[reward] = loot.get(reward, 0) + 1
-        return loot
+        for item, count in loot.items():
+            embed.description += f"\n> {count}x **{item.title()}** {emojis[item]}"
+        if random.random() < tool["break"]:
+            embed.description += f"\n:worried: **Beim Abbauen ist deine Spitzhacke kaputt gegangen!** ({int(tool['break']*100)}% Chance)"
+            remove_item(ctx.author, pickaxe, 1)
+        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
+        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
+        await ctx.send(embed=embed)
 
 
 def setup(bot):
