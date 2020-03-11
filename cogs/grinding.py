@@ -1,4 +1,5 @@
 import discord
+from discord import Embed
 from discord.ext import commands
 from main import connection
 from utils.checks import commands_only, has_any_item
@@ -28,20 +29,18 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         tools = [t["_id"] for t in tools]
         if not args:
             page = 0
-            pages, b = divmod(len(self.recipes), 5)
-            if b != 0:
-                pages += 1
+            pages = len(self.recipes)
 
             def create_embed(p):
+                group = list(self.recipes)[p]
                 embed = discord.Embed(
                     color=discord.Color.blue(),
-                    title=f"Crafting ({p+1}/{pages})",
+                    title=f"{group.title()} ({p+1}/{pages})",
                     description=f"Benutze `{ctx.prefix}craft item`, um ein Item zu craften.\nWenn du mehrere Items auf einmal craften möchtest, benutze `{ctx.prefix}craft item=3`\n"
                 )
-                for crafting_item, ingredients in [(a, b) for a, b in self.recipes.items()][p * 5:p * 5 + 5]:
+                for crafting_item, ingredients in [(a, b) for a, b in self.recipes[group].items()]:
                     copy = [k for k in ingredients.keys()]
                     for ingredient in copy:
-                        print(ingredient)
                         if ingredient in tools:
                             ingredients.pop(ingredient)
                     lines, remainer = divmod(len(ingredients), 5)
@@ -74,6 +73,11 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         page += 1
                     await menu.edit(embed=create_embed(page))
         else:
+            recipes = {}
+            for group in self.recipes.values():
+                for name, recipe in group.items():
+                    recipes[name] = recipe
+            print(recipes)
             args = args.split("=")
             if len(args) == 1:
                 args.append(1)
@@ -82,8 +86,8 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 return
             item = args[0]
             amount = int(args[1])
-            if item.lower() in self.recipes:
-                recipe = self.recipes[item.lower()]
+            if item.lower() in recipes:
+                recipe = recipes[item.lower()]
                 embed = discord.Embed(
                     color=discord.Color.green(),
                     title=item.title(),
@@ -112,7 +116,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         await msg.clear_reactions()
                         return
                     result[item.lower()] = amount
-                    print(result)
                     self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": result})
                     await msg.edit(embed=discord.Embed(
                         color=discord.Color.green(),
