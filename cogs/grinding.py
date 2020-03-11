@@ -18,15 +18,15 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             self.recipes = json.load(f)
 
     @commands.command(usage="craft <item>", aliases=["crafting"])
-    @commands_only()
-    async def craft(self, ctx, *, item: str = None):
+    #@commands_only()
+    async def craft(self, ctx, *, args: str = None):
         """Carfting-Commands"""
         inv = self.con["inventory"].find_one({"_id": ctx.author.id})
         items = self.con["items"].find()
         tools = list(self.con["tools"].find())
         emojis = {item["_id"]: item["emoji"] for item in list(items) + tools}
         tools = [t["_id"] for t in tools]
-        if not item:
+        if not args:
             page = 0
             pages, b = divmod(len(self.recipes), 5)
             if b != 0:
@@ -36,7 +36,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 embed = discord.Embed(
                     color=discord.Color.blue(),
                     title=f"Crafting ({p+1}/{pages})",
-                    description=f"Benutze `{ctx.prefix}craft <item>`, um ein Item zu craften.\n"
+                    description=f"Benutze `{ctx.prefix}craft item`, um ein Item zu craften.\nWenn du mehrere Items auf einmal craften möchtest, benutze `{ctx.prefix}craft item=3`\n"
                 )
                 for crafting_item, ingredients in [(a, b) for a, b in self.recipes.items()][p * 5:p * 5 + 5]:
                     lines, remainer = divmod(len(ingredients), 5)
@@ -70,34 +70,53 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     elif str(reaction.emoji) == reactions[1] and page < pages-1:
                         page += 1
                     await menu.edit(embed=create_embed(page))
-        elif item.lower() in self.recipes:
-            recipe = self.recipes[item.lower()]
-            embed = discord.Embed(
-                color=discord.Color.green(),
-                title=item.title(),
-                description=""
-            )
-            missing = False
-            for ingredient, count in recipe.items():
-                amount = inv.get(ingredient, 0)
-                if amount >= count:
-                    amount = count
-                else:
-                    missing = True
-                embed.description += f"\n> **{amount}/{count}** {ingredient} {emojis[ingredient]}"
-            if missing:
-                embed.color = discord.Color.red()
-                await ctx.send(embed=embed)
-            else:
-                msg = await ctx.send(embed=embed)
-                await msg.add_reaction("☑️")
-                try:
-                    reaction, user = await ctx.bot.wait_for("reaction_add", check=lambda r, u: r.message.id == msg.id and u == ctx.author and str(r.emoji) == "☑️", timeout=60)
-                except asyncio.TimeoutError:
-                    await msg.clear_reactions()
-                    return
         else:
-            await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
+            args = args.split("=")
+            if len(args) == 1:
+                args.append(1)
+            elif len(args) != 2:
+                await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal craften möchtest, benutze `{ctx.prefix}craft item=3`")
+                return
+            item = args[0]
+            amount = int(args[1])
+            if item.lower() in self.recipes:
+                recipe = self.recipes[item.lower()]
+                embed = discord.Embed(
+                    color=discord.Color.green(),
+                    title=item.title(),
+                    description=""
+                )
+                missing = False
+                result = {}
+                for ingredient, count in recipe.items():
+                    count = count * amount
+                    result[ingredient] = -count
+                    inv_count = inv.get(ingredient, 0)
+                    if inv_count >= count:
+                        inv_count = count
+                    else:
+                        missing = True
+                    embed.description += f"\n> **{inv_count}/{count}** {ingredient} {emojis[ingredient]}"
+                if missing:
+                    embed.color = discord.Color.red()
+                    await ctx.send(embed=embed)
+                else:
+                    msg = await ctx.send(embed=embed)
+                    await msg.add_reaction("☑️")
+                    try:
+                        reaction, user = await ctx.bot.wait_for("reaction_add", check=lambda r, u: r.message.id == msg.id and u == ctx.author and str(r.emoji) == "☑️", timeout=60)
+                    except asyncio.TimeoutError:
+                        await msg.clear_reactions()
+                        return
+                    result[item.lower()] = amount
+                    self.con["inv"].update({"_id": ctx.author}, {"$add": result})
+                    await msg.edit(embed=discord.Embed(
+                        color=discord.Color.green(),
+                        title="Crafting erfolgreich!",
+                        description=f"{ctx.author.mention} Du hast {amount}x **{item.title()}** {emojis[item.lower()]} gecraftet!"
+                    ))
+            else:
+                await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
 
     @commands.command()
     @commands.cooldown(1, 300, commands.BucketType.user)
