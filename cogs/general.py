@@ -21,10 +21,9 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def afk(self, ctx, message: str = "Keinen Grund angegeben"):
         """Setzt eine Afk-Nachricht, die andere sehen werden, wenn sie dich pingen"""
-        self.con["afk"].update({
-            "_id": ctx.author.id,
+        self.con["afk"].update({"_id": ctx.author.id}, {
             "message": message,
-            "time": str(datetime.datetime.now())
+            "time": datetime.datetime.now()
         }, upsert=True)
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
