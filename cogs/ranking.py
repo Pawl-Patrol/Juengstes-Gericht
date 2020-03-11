@@ -46,7 +46,6 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         if user.bot:
             await ctx.send("Ich kann keine Ränge von Bots anzeigen")
             return
-
         async with ctx.typing():
             stats = self.con["stats"].find_one({"_id": user.id})
             level, xp, cap = lvlcalc(stats["total_xp"])
@@ -72,7 +71,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     mask_draw = ImageDraw.Draw(mask)
                     mask_draw.ellipse([(0, 0), im.size], fill=255)
                     img.paste(rgb_avatar, (1450, 70), mask=mask)
-            img.save('generated_data/rank_gen.png')
+            img.save('data/media/rank_gen.png')
             file = discord.File("generated_data/rank_gen.png")
             await ctx.send(file=file, content=f":clipboard: | **Rang von {user}**")
 
