@@ -7,7 +7,7 @@ from main import lvlcalc
 import datetime
 import json
 import random
-import asyncio
+
 
 class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
@@ -172,18 +172,33 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 title=f"Upgrades von {ctx.author}",
                 description=f"Benutze `{ctx.prefix}upgrade`, um etwas upzugraden"
             )
-            mult_lvl, money_lvl, income_lvl, crit_lvl, power_lvl = u['multiplier'], u['money'], u['income'], u['crit'], u['power']
-            mult_value, money_value, income_value, crit_value, power_value = convert_upgrade_levels(mult_lvl, money_lvl, income_lvl, crit_lvl, power_lvl)
+            mult_lvl, money_lvl, income_lvl, crit_lvl, power_lvl = u['multiplier'], u['money'], u['income'], u['crit'], \
+                                                                   u['power']
+            mult_value, money_value, income_value, crit_value, power_value = convert_upgrade_levels(mult_lvl, money_lvl,
+                                                                                                    income_lvl,
+                                                                                                    crit_lvl, power_lvl)
             mult_price = get_upgrade_price(mult_lvl=mult_lvl + 1)
             money_price = get_upgrade_price(money_lvl=money_lvl + 1)
             income_price = get_upgrade_price(income_lvl=income_lvl + 1)
             crit_price = get_upgrade_price(crit_lvl=crit_lvl + 1)
             power_price = get_upgrade_price(power_lvl=power_lvl + 1)
-            embed.add_field(name=f":sparkles: XP-Boost | {mult_price} :dollar: | Level {mult_lvl} ({mult_value}% Multiplier)", value=f"Erhöht deine XP pro Nachricht.\n`ok upgrade xp`", inline=False)
-            embed.add_field(name=f":money_with_wings: Dollar pro Nachricht | {money_price} :dollar: | Level {money_lvl} ({money_value} Dollar)", value=f"Erhöht die Anzahl an Dollar pro Nachricht\n`ok upgrade money`", inline=False)
-            embed.add_field(name=f":moneybag: Einkommen | {income_price} :dollar: | Level {income_lvl} ({income_value} Dollar)", value=f"Erhöht die Anzahl an Dollar, die du pro 10 Minuten bekommst\n`ok upgrade income`", inline=False)
-            embed.add_field(name=f":four_leaf_clover: Kritische Treffer | {crit_price} :dollar: | Level {crit_lvl} ({crit_value}% Chance)", value=f"Erhöht die Wahrscheilichkeit, dass du doppelt so viel Geld und XP für eine Nachricht bekommst\n`ok upgrade crit`", inline=False)
-            embed.add_field(name=f":thunder_cloud_rain: Geldregen | {power_price} :dollar: | Level {power_lvl} ({power_value} Dollar)", value=f"Erhöht die Anzahl an Dollar, die du bei einem Geldregen bekommst (1%)\n`ok upgrade power`", inline=False)
+            embed.add_field(
+                name=f":sparkles: XP-Boost | {mult_price} :dollar: | Level {mult_lvl} ({mult_value}% Multiplier)",
+                value=f"Erhöht deine XP pro Nachricht.\n`ok upgrade xp`", inline=False)
+            embed.add_field(
+                name=f":money_with_wings: Dollar pro Nachricht | {money_price} :dollar: | Level {money_lvl} ({money_value} Dollar)",
+                value=f"Erhöht die Anzahl an Dollar pro Nachricht\n`ok upgrade money`", inline=False)
+            embed.add_field(
+                name=f":moneybag: Einkommen | {income_price} :dollar: | Level {income_lvl} ({income_value} Dollar)",
+                value=f"Erhöht die Anzahl an Dollar, die du pro 10 Minuten bekommst\n`ok upgrade income`", inline=False)
+            embed.add_field(
+                name=f":four_leaf_clover: Kritische Treffer | {crit_price} :dollar: | Level {crit_lvl} ({crit_value}% Chance)",
+                value=f"Erhöht die Wahrscheilichkeit, dass du doppelt so viel Geld und XP für eine Nachricht bekommst\n`ok upgrade crit`",
+                inline=False)
+            embed.add_field(
+                name=f":thunder_cloud_rain: Geldregen | {power_price} :dollar: | Level {power_lvl} ({power_value} Dollar)",
+                value=f"Erhöht die Anzahl an Dollar, die du bei einem Geldregen bekommst (1%)\n`ok upgrade power`",
+                inline=False)
             await ctx.send(embed=embed)
 
     @upgrades.command()
@@ -196,10 +211,11 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         level = u["multiplier"] + amount
         price = get_upgrade_price(mult_lvl=level)
         if stats["balance"] < price:
-            await ctx.send(f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
+            await ctx.send(
+                f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
         elif level > 50:
             await ctx.send(f"{ctx.author.mention} Du kannst nicht höher als Level 50 upgraden")
-        #elif user_lvl < level:
+        # elif user_lvl < level:
         else:
             self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -price}})
             self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {"multiplier": amount}})
@@ -214,7 +230,8 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         level = u["money"] + amount
         price = get_upgrade_price(money_lvl=level)
         if bal < price:
-            await ctx.send(f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
+            await ctx.send(
+                f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
         elif level > 50:
             await ctx.send(f"{ctx.author.mention} Du kannst nicht höher als Level 50 upgraden")
         else:
@@ -277,7 +294,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Du hast deinen Geldregen auf **Level {level}** erweitert")
 
     @commands.command(aliases=["prefix"])
-    async def setprefix(self, ctx, *, prefix = ""):
+    async def setprefix(self, ctx, *, prefix=""):
         """Legt einen Prefix nur für dich fest"""
         with open("data/prefixes.json", "r") as f:
             prefixes = json.load(f)
@@ -306,12 +323,11 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def todo(self, ctx):
         """Deine Todo-Liste"""
         if ctx.invoked_subcommand is None:
-            with open("data/todo.json", "r") as f:
-                todo = json.load(f)
-            if str(ctx.author.id) in todo:
+            todo = self.con["todo"].find_one({"_id": ctx.author.id})
+            if todo:
                 msg = f"**__Todo von {ctx.author}__:**  "
-                for i, entry in enumerate(todo[str(ctx.author.id)]):
-                    msg += f"\n**{i+1}.** {entry}"
+                for i, entry in enumerate(todo["todo"], 1):
+                    msg += f"\n**{i}.** {entry}"
                 await ctx.send(msg)
             else:
                 await ctx.send(f"{ctx.author.mention} Du hast derzeit nichts zu tun")
@@ -319,28 +335,19 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @todo.command(usage="add <Eintrag>")
     async def add(self, ctx, *, entry: str):
         """Fügt einen neuen Stichpunkt zu deiner Todo-Liste hinzu"""
-        with open("data/todo.json", "r") as f:
-            todo = json.load(f)
-        if str(ctx.author.id) in todo:
-            todo[str(ctx.author.id)].append(entry)
-        else:
-            todo[str(ctx.author.id)] = [entry]
-        with open("data/todo.json", "w") as f:
-            json.dump(todo, f, indent=4)
-        await ctx.send(f"{ctx.author.mention} Neuer Stichpunkt wurde hinzugefügt!\n```{entry}```")
+        self.con["todo"].update({"_id": ctx.author.id}, {"$push": {"todo": entry}}, upsert=True)
+        await ctx.send(f"{ctx.author.mention} Neuer Stichpunkt wurde hinzugefügt.\n```{entry}```")
 
     @todo.command(usage="edit <Nummer> <Eintrag>")
     async def edit(self, ctx, number: int, *, entry: str):
         """Ändert einen Punkt in deiner Todo-Liste"""
-        with open("data/todo.json", "r") as f:
-            todo = json.load(f)
-        if str(ctx.author.id) in todo:
-            length = len(todo[str(ctx.author.id)])
-            if number >= 1 and number <= length:
-                todo[str(ctx.author.id)][number-1] = entry
-                with open("data/todo.json", "w") as f:
-                    json.dump(todo, f, indent=4)
-                await ctx.send(f"{ctx.author.mention} Stichpunkt wurde geändert.")
+        todo = self.con["todo"].find_one({"_id": ctx.author.id})
+        if todo:
+            todo = todo["todo"]
+            if 1 <= number <= len(todo):
+                todo[number - 1] = entry
+                self.con["todo"].update({"_id": ctx.author.id}, {"$set": {"todo": todo}}, upsert=True)
+                await ctx.send(f"{ctx.author.mention} Stichpunkt wurde geändert.\n```{entry}```")
             else:
                 await ctx.send(f"{ctx.author.mention} Stichpunkt nicht gefunden!")
         else:
@@ -349,17 +356,15 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @todo.command(usage="remove <Nummer>", aliases=["del"])
     async def remove(self, ctx, *, number: int):
         """Entfernt einen Stichpunkt aus deiner Todo-Liste"""
-        with open("data/todo.json", "r") as f:
-            todo = json.load(f)
-        if str(ctx.author.id) in todo:
-            length = len(todo[str(ctx.author.id)])
-            if number >= 1 and number <= length:
-                if length == 1:
-                    todo.pop(str(ctx.author.id))
+        todo = self.con["todo"].find_one({"_id": ctx.author.id})
+        if todo:
+            todo = todo["todo"]
+            if 1 <= number <= len(todo):
+                if len(todo) == 1:
+                    self.con["todo"].delete_one({"_id": ctx.author.id})
                 else:
-                    todo[str(ctx.author.id)].pop(number-1)
-                with open("data/todo.json", "w") as f:
-                    json.dump(todo, f, indent=4)
+                    todo.pop(number - 1)
+                    self.con["todo"].update({"_id": ctx.author.id}, {"$set": {"todo": todo}})
                 await ctx.send(f"{ctx.author.mention} Stichpunkt wurde gelöscht.")
             else:
                 await ctx.send(f"{ctx.author.mention} Stichpunkt nicht gefunden!")
@@ -369,64 +374,13 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @todo.command(aliases=["clean"])
     async def clear(self, ctx):
         """Entfernt alle Stichpunkte aus deiner Todo-Liste"""
-        with open("data/todo.json", "r") as f:
-            todo = json.load(f)
-        if str(ctx.author.id) in todo:
-            length = len(todo[str(ctx.author.id)])
-            todo.pop(str(ctx.author.id))
-            with open("data/todo.json", "w") as f:
-                json.dump(todo, f, indent=4)
-            await ctx.send(f"{ctx.author.mention} {length} Stichpunkte wurden gelöscht.")
+        todo = self.con["todo"].find_one({"_id": ctx.author.id})
+        if todo:
+            self.con["todo"].delete_one({"_id": ctx.author.id})
+            await ctx.send(f"{ctx.author.mention} {len(todo)} Stichpunkte wurden gelöscht.")
         else:
             await ctx.send(f"{ctx.author.mention} Du hast keine Todo-Liste!")
 
-    @commands.command(hidden=True, enabled=False)
-    @commands.has_permissions(administrator=True)
-    async def regeln(self, ctx):
-        await ctx.message.delete()
-        embed = discord.Embed(
-            color=0xFF9AA2,
-            title="Unsere Regeln",
-            description="❥ ~ Dauerhafter Invite: https://discord.gg/eJ8rfpr\n❥ ~ Es gelten die [Richtlinien](https://discordapp.com/guidelines) und die [Nutzungsbedingungen](https://discordapp.com/terms) von Discord\n\n**§1 ~ __Allgemeine Regeln__:**\n> ❧ ~ Keine Werbung für andere Server (auch per DM)\n> ❧ ~ Kein Rassismus und Antisemitismus\n> ❧ ~ Keine anstößigen Nicknames\n**§2 ~ __Hinweise zum Server__:**\n> ❧ ~ Es wird hauptsächlich Deutsch gesprochen\n> ❧ ~ Alle NSFW-Inhalte sind verboten\n> ❧ ~ Wir sind kein Datingserver. Klärt sowas bitte privat\n**§3 ~ __Regeln im Chat__:**\n> ❧ ~ Inhalte immer in den richtigen Channel schicken\n> ❧ ~ Niemand wird beleidigt\n> ❧ ~ Spam ist zu unterlassen\n**§4 ~ __Regeln im Voice__:**\n> ❧ ~ Kein Channelhopping\n> ❧ ~ Keine Voicechanger\n> ❧ ~ Kein AFK-XP-Farming\n**§5 ~ __Verhalten__:**\n> ❧ ~ Respektiere alle Nutzer. Sei freundlich und nett\n> ❧ ~ Gib keine persönlichen Informationen von anderen Personen weiter\n> ❧ ~ Wenn du Frust hast, lass ihn nicht im Chat aus\n**§6 ~ __Problemregelung__:**\n> ❧ ~ Den Anweisungen des Serverteams ist Folge zu leisten\n> ❧ ~ Probleme werden entweder in einem Supportraum oder per DM geklärt\n> ❧ ~ Wenn du deine Unschuld beweisen kannst, darfst du Widerspruch einlegen\n**§7 ~ __Sonstiges__:**\n> ❧ ~ Missbrauche deine Rechte nicht\n> ❧ ~ Versuche nicht die Regeln zu umgehen\n> ❧ ~ Selfbotting sowie Autohotkeys sind nicht erlaubt"
-        )
-        embed.set_footer(text="Klicke auf das Häkchen, um die Regeln zu akzeptieren", icon_url="https://images-ext-1.discordapp.net/external/XbGicJ-mGojv4bKfTfNnTBoWCwRja17M9cUpUGWrDek/%3Fwidth%3D331%26height%3D331/https/media.discordapp.net/attachments/593494518305914900/663396160882606109/ezgif-7-95cf61d357d8.gif")
-        f = discord.File("data/media/regeln.png")
-        msg = await ctx.send(file=f, embed=embed)
-        await msg.add_reaction("☑️")
-        
-    @commands.command(hidden=True, enabled=False)
-    @commands.has_permissions(administrator=True)
-    async def support(self, ctx):
-        await ctx.message.delete()
-        embed = discord.Embed(
-            color=0xFA4148,
-            title=":triangular_flag_on_post: Support & Reports",
-            description='Wenn du mit einem Serverteam-Mitglied sprechen möchtest, klicke auf die Reaktion unten, um einen Supportraum zu erstellen. Missbrauch wird bestraft.\n\n**Beispiele:**\n> "@User#0001 sendet Server-Werbung"\n> "In <#680519171989045271> spammen Nutzer"'
-        )
-        embed.set_footer(text="Um einen Raum zu erstellen, klicke auf die Reaktion", icon_url="https://2017.igem.org/wiki/images/7/7e/T--HZAU-China--arrow.gif")
-        f = discord.File("data/media/support.png")
-        msg = await ctx.send(file=f, embed=embed)
-        await msg.add_reaction("✉️")
-
-    @commands.command(hidden=True, enabled=True)
-    @commands.has_permissions(administrator=True)
-    async def auto_info(self, ctx):
-        await ctx.message.delete()
-        f = discord.File("./data/media/info.png")
-        msg = await ctx.send(file=f, embed=discord.Embed(title=":clock:"))
-        rs = ["⏮️", "◀️", "▶️", "⏭️"]
-        for r in rs:
-            await msg.add_reaction(r)
-
-    @commands.command(hidden=True)
-    @commands.cooldown(1, 5, commands.BucketType.user)
-    @commands.has_permissions(administrator=True)
-    async def test(self, ctx):
-        """test"""
-        for member in ctx.guild.members:
-            if member.bot:
-                continue
-            self.con["stats"].update({"_id": member.id}, {"$set": {"multiplier": 1}})
 
 def setup(bot):
     bot.add_cog(General(bot))
