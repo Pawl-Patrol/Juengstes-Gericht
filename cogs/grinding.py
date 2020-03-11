@@ -109,7 +109,8 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         await msg.clear_reactions()
                         return
                     result[item.lower()] = amount
-                    self.con["inv"].update({"_id": ctx.author}, {"$add": result})
+                    print(result)
+                    self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": result})
                     await msg.edit(embed=discord.Embed(
                         color=discord.Color.green(),
                         title="Crafting erfolgreich!",
