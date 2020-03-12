@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from main import connection
 from utils.utils import convert_upgrade_levels
-from utils.checks import commands_or_casino_only
+from utils.checks import commands_only
 from main import lvlcalc
 import datetime
 import json
@@ -18,6 +18,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         self.booster_role_position = self.config["booster_role_position"]
 
     @commands.command(usage='afk <message>')
+    @commands_only()
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def afk(self, ctx, message: str = "Keinen Grund angegeben"):
         """Setzt eine Afk-Nachricht, die andere sehen werden, wenn sie dich pingen"""
@@ -74,6 +75,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Der Name wurde in **{name}** geändert")
 
     @commands.group(usage='customrole [create|delete|name|color|random]', aliases=["crole"], case_insensitive=True)
+    @commands_only()
     @commands.has_role('Nitro Booster')
     async def customrole(self, ctx: commands.Context):
         """Commands für eine eigene Rolle"""
@@ -81,6 +83,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send_help(ctx.command)
 
     @customrole.command(usage='create [color] [name]', aliases=['add', 'new'])
+    @commands_only()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def create(self, ctx, color: discord.Color, *, name: str):
         """Erstellt dir eine eigene Rolle"""
@@ -99,6 +102,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             ))
 
     @customrole.command(aliases=['remove'])
+    @commands_only()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def delete(self, ctx):
         """Löscht deine aktuelle Rolle"""
@@ -112,6 +116,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Deine Rolle wurde erfolgreich gelöscht")
 
     @customrole.command(aliases=['colour', 'farbe'])
+    @commands_only()
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def color(self, ctx, color: discord.Color):
         """Ändert die Farbe deiner Rolle"""
@@ -128,6 +133,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             ))
 
     @customrole.command()
+    @commands_only()
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def name(self, ctx, *, name: str):
         """Ändert den Namen deiner Rolle"""
@@ -144,6 +150,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             ))
 
     @customrole.command()
+    @commands_only()
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def random(self, ctx):
         """Gibt deiner Rolle eine zufällige Farbe"""
@@ -161,7 +168,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             ))
 
     @commands.group(usage='upgrade <item>', aliases=['u', 'upgrade', 'tier'], case_insensitive=True)
-    #@commands_or_casino_only()
+    @commands_only()
     async def upgrades(self, ctx, upgrade: str = None, amount: str = "1"):
         """Zeigt deine Upgrades"""
         stats = self.con["stats"].find_one({"_id": ctx.author.id})
@@ -277,6 +284,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Du hast keine Todo-Liste!")
 
     @commands.command(usage="iteminfo <item>")
+    @commands_only()
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def iteminfo(self, ctx, *, item: str):
         """Zeigt dir Informationen über ein Item"""
