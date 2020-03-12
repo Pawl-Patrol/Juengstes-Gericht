@@ -1,10 +1,8 @@
 import discord
 from discord.ext import commands, timers
 from main import connection
-from utils.checks import commands_or_casino_only, owner_only, has_item
+from utils.checks import commands_or_casino_only, owner_only
 from utils.converters import is_buyable_item, is_item
-import pymongo
-import datetime
 import asyncio
 
 
@@ -26,7 +24,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.command(usage="shop [page]", aliases=['market', 'store'])
     @commands.cooldown(1, 3, commands.BucketType.user)
-    @commands_or_casino_only()
+    #@commands_or_casino_only()
     async def shop(self, ctx, page: int = 1):
         """Zeigt den Shop"""
 
@@ -35,6 +33,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         for item in shop:
             if item["buy"]:
                 shop_items.append(item)
+        shop_items.sort(key=lambda i: i["buy"])
         pages, b = divmod(len(shop_items), 5)
         if b != 0:
             pages += 1
@@ -50,7 +49,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
             menu = await ctx.send(embed=create_embed(page))
             if pages > 1:
-                reactions = ['◀', '⏹', '▶']
+                reactions = ['◀', '▶']
                 for reaction in reactions:
                     await menu.add_reaction(reaction)
 
@@ -61,16 +60,13 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     try:
                         reaction, user = await ctx.bot.wait_for("reaction_add", check=check, timeout=60)
                     except asyncio.TimeoutError:
-                        await menu.delete()
+                        await menu.clear_reactions()
                         return
                     await menu.remove_reaction(reaction, user)
                     if str(reaction.emoji) == reactions[0] and page > 1:
                         page -= 1
                         await menu.edit(embed=create_embed(page))
-                    elif str(reaction.emoji) == reactions[1]:
-                        await menu.delete()
-                        return
-                    elif str(reaction.emoji) == reactions[2] and page < pages:
+                    elif str(reaction.emoji) == reactions[1] and page < pages:
                         page += 1
                         await menu.edit(embed=create_embed(page))
 
