@@ -12,6 +12,7 @@ import math
 class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     def __init__(self, bot):
+        self.emoji = ":game_die:"
         self.bot = bot
         self.con = connection
         with open("data/gambling.json", "r") as f:
