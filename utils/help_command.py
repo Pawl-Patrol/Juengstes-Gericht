@@ -26,23 +26,19 @@ class HelpCommand(commands.HelpCommand):
         ))
 
     async def send_bot_help(self, mapping):
-        def key(c):
-            return c.cog_name or 'Keine Kategorie'
-
         bot = self.context.bot
-        entries = await self.filter_commands(bot.commands, sort=True, key=key)
         embed = discord.Embed(
             color=discord.Color.blue(),
             description=f"**[Server Invite](https://discord.gg/eJ8rfpr)**\nServer Prefix: `{self.clean_prefix.replace(' ', '')}`\n"
         )
         total = 0
-        for cog, cmds in groupby(entries, key=key):
-            cmds = sorted(cmds, key=lambda c: c.name)
+        for cog_name, cog in bot.cogs.items():
+            cmds = sorted(cog.get_commands(), key=lambda c: c.name)
             if len(cmds) == 0:
                 continue
             total += len(cmds)
-            cmd_string = " ‖ ".join([f"`{c.name}`" for c in cmds])
-            embed.description += f"\n**{cog.upper()}** ({len(cmds)} Commands)\n{cmd_string}\n"
+            cmd_string = " ".join([f"`{c.name}`" for c in cmds])
+            embed.description += f"\n**{cog.emoji} {cog_name.upper()}** ({len(cmds)} Commands)\n{cmd_string}\n"
         embed.title = f'Alle Commands ({total} Commands)'
         await self.context.send(embed=embed)
 
