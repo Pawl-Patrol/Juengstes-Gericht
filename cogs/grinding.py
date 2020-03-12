@@ -41,7 +41,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     copy = [k for k in ingredients.keys()]
                     for ingredient in copy:
                         if ingredient in tools:
-                            print(ingredient)
                             ingredients.pop(ingredient)
                     lines, remainer = divmod(len(ingredients), 5)
                     if remainer != 0:
