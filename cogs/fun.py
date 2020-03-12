@@ -10,6 +10,7 @@ import random
 class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     def __init__(self, bot):
+        self.emoji = ":rocket:"
         self.bot = bot
 
     @commands.command(enabled=False, usage="marry <user>")
