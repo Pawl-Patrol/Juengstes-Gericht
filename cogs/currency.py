@@ -4,13 +4,12 @@ from main import connection
 from utils.checks import commands_or_casino_only, owner_only
 import pymongo
 import random
-import time
-import asyncio
 
 
 class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     def __init__(self, bot):
+        self.emoji = ":moneybag:"
         self.bot = bot
         self.con = connection
 
