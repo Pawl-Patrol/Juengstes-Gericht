@@ -30,7 +30,7 @@ def convert_pet(pet):
     }
     for stat in ["hunger", "hygiene", "fun", "energy"]:
         t = (tn - pet[stat]).total_seconds()
-        p = 100 - int(t / 20)
+        p = 100 - int(t / 120)
         if p < 0:
             p = 0
         stats[stat] = p
