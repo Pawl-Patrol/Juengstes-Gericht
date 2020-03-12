@@ -1,5 +1,6 @@
 from discord.ext import commands
 from main import lvlcalc, connection as con
+import datetime
 import json
 
 with open("data/config.json", "r") as f:
@@ -66,13 +67,22 @@ def has_item(item):
 
     return commands.check(predicate)
 
-def has_any_item(items):
+def has_pet():
     async def predicate(ctx):
-        inv = con["inventory"].find_one({"_id": ctx.author.id})
-        for item in items:
-            if item in inv:
-                return True
-        else:
-            raise commands.CheckFailure(f"Du brauchst mindestens **1x {item.title()}**, um diesen Command nutzen zu können")
+        pet = con["pets"].find_one({"_id": ctx.author.id})
+        if not pet:
+            tn = datetime.datetime.utcnow() - datetime.timedelta(minutes=15)
+            post = {
+                "_id": ctx.author.id,
+                "url": "https://cdn.discordapp.com/attachments/593494518305914900/687695850377445393/offended_owl.png",
+                "name": f"{ctx.author.name}'s Pet",
+                "xp": 0,
+                "hunger": tn,
+                "hygiene": tn,
+                "fun": tn,
+                "energy": tn
+            }
+            con["pets"].insert_one(post)
+        return True
 
     return commands.check(predicate)
