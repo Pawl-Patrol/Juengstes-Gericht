@@ -167,7 +167,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 description="Deine Farbe wurde geändert"
             ))
 
-    @commands.group(usage='upgrade <item>', aliases=['u', 'upgrade', 'tier'], case_insensitive=True)
+    @commands.command(usage='upgrade <item>', aliases=['u', 'upgrade', 'tier'])
     @commands_only()
     async def upgrades(self, ctx, upgrade: str = None, amount: str = "1"):
         """Zeigt deine Upgrades"""
