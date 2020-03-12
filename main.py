@@ -191,7 +191,6 @@ class Bot(commands.Bot):
         """Erstellt für den Member ein Profil für die Upgrades in der Datenbank"""
         upgrades = {
             "_id": member.id,
-            "total": 0,
             "multiplier": 0,
             "money": 0,
             "crit": 0
