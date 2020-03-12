@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from main import connection
-from utils.upgrades import get_upgrade_price, convert_upgrade_levels
+from utils.utils import convert_upgrade_levels
 from utils.checks import commands_or_casino_only
 from main import lvlcalc
 import datetime
@@ -161,136 +161,47 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             ))
 
     @commands.group(usage='upgrade <item>', aliases=['u', 'upgrade', 'tier'], case_insensitive=True)
-    @commands_or_casino_only()
-    async def upgrades(self, ctx: commands.Context):
+    #@commands_or_casino_only()
+    async def upgrades(self, ctx, upgrade: str = None):
         """Zeigt deine Upgrades"""
-        if ctx.invoked_subcommand is None:
-            u = self.con["upgrades"].find_one({"_id": ctx.author.id})
+        stats = self.con["stats"].find_one({"_id": ctx.author.id})
+        level, _, _ = lvlcalc(stats["total_xp"])
+        u = self.con["upgrades"].find_one({"_id": ctx.author.id})
+        stat_points = level-(u['multiplier'] + u['money'] + u['crit'])
+        if upgrade is None:
             embed = discord.Embed(
                 color=discord.Color.blurple(),
                 title=f"Upgrades von {ctx.author}",
-                description=f"Benutze `{ctx.prefix}upgrade`, um etwas upzugraden"
+                description=f"Benutze `{ctx.prefix}upgrade`, um etwas upzugraden\n\n**Übrige Stat-Points: {stat_points}**"
             )
-            mult_lvl, money_lvl, income_lvl, crit_lvl, power_lvl = u['multiplier'], u['money'], u['income'], u['crit'], \
-                                                                   u['power']
-            mult_value, money_value, income_value, crit_value, power_value = convert_upgrade_levels(mult_lvl, money_lvl,
-                                                                                                    income_lvl,
-                                                                                                    crit_lvl, power_lvl)
-            mult_price = get_upgrade_price(mult_lvl=mult_lvl + 1)
-            money_price = get_upgrade_price(money_lvl=money_lvl + 1)
-            income_price = get_upgrade_price(income_lvl=income_lvl + 1)
-            crit_price = get_upgrade_price(crit_lvl=crit_lvl + 1)
-            power_price = get_upgrade_price(power_lvl=power_lvl + 1)
+            mult, money, crit = convert_upgrade_levels(u["multiplier"], u["money"], u["crit"])
+
+            def create_bar(lvl):
+                bar = "▰" * lvl + "▱" * (10-lvl)
+                string = f"[{bar}](https://www.youtube.com/watch?v=DyDfgMOUjCI&list=RD2G1Bnwsw7lA&index=10)"
+                return string
+
             embed.add_field(
-                name=f":sparkles: XP-Boost | {mult_price} :dollar: | Level {mult_lvl} ({mult_value}% Multiplier)",
-                value=f"Erhöht deine XP pro Nachricht.\n`ok upgrade xp`", inline=False)
+                name=f":sparkles: XP pro Nachricht: {mult}%",
+                value=f"**{create_bar(u['multiplier'])} ({u['multiplier']}/10)**\n*Erhöht die XP, die du pro Nachricht bekommst (2m)*\n`{ctx.prefix}upgrade multiplier`", inline=False)
             embed.add_field(
-                name=f":money_with_wings: Dollar pro Nachricht | {money_price} :dollar: | Level {money_lvl} ({money_value} Dollar)",
-                value=f"Erhöht die Anzahl an Dollar pro Nachricht\n`ok upgrade money`", inline=False)
+                name=f":money_with_wings: Dollar pro Nachricht: {money}",
+                value=f"**{create_bar(u['money'])} ({u['money']}/10)**\n*Erhöht das Geld, das du pro Nachricht bekommst (2m)*\n`{ctx.prefix}upgrade money`", inline=False)
             embed.add_field(
-                name=f":moneybag: Einkommen | {income_price} :dollar: | Level {income_lvl} ({income_value} Dollar)",
-                value=f"Erhöht die Anzahl an Dollar, die du pro 10 Minuten bekommst\n`ok upgrade income`", inline=False)
-            embed.add_field(
-                name=f":four_leaf_clover: Kritische Treffer | {crit_price} :dollar: | Level {crit_lvl} ({crit_value}% Chance)",
-                value=f"Erhöht die Wahrscheilichkeit, dass du doppelt so viel Geld und XP für eine Nachricht bekommst\n`ok upgrade crit`",
-                inline=False)
-            embed.add_field(
-                name=f":thunder_cloud_rain: Geldregen | {power_price} :dollar: | Level {power_lvl} ({power_value} Dollar)",
-                value=f"Erhöht die Anzahl an Dollar, die du bei einem Geldregen bekommst (1%)\n`ok upgrade power`",
-                inline=False)
+                name=f":four_leaf_clover: Crit Chance: {crit}%",
+                value=f"**{create_bar(u['crit'])} ({u['crit']}/10)**\n*Erhöht die Chance, dass du doppelt XP & Geld bekommst*\n`{ctx.prefix}upgrade crit`", inline=False)
             await ctx.send(embed=embed)
-
-    @upgrades.command()
-    @commands.cooldown(1, 3, commands.BucketType.user)
-    async def xp(self, ctx, amount: int = 1):
-        """Erhöht deine XP pro Nachricht"""
-        stats = self.con["stats"].find_one({"_id": ctx.author.id})
-        user_lvl, _, _ = lvlcalc(stats["total_xp"])
-        u = self.con["upgrades"].find_one({"_id": ctx.author.id})
-        level = u["multiplier"] + amount
-        price = get_upgrade_price(mult_lvl=level)
-        if stats["balance"] < price:
-            await ctx.send(
-                f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
-        elif level > 50:
-            await ctx.send(f"{ctx.author.mention} Du kannst nicht höher als Level 50 upgraden")
-        # elif user_lvl < level:
+        elif upgrade.lower() in ["multiplier", "money", "crit"]:
+            if stat_points > 0:
+                if u[upgrade.lower()] < 10:
+                    self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {upgrade.lower(): 1}})
+                    await ctx.send(f"{ctx.author.mention} Du hast **{upgrade.title()}** auf Level **{u[upgrade.lower()]+1}** erweitert")
+                else:
+                    await ctx.send(f"{ctx.author.mention} Du hast bereits das Maximallevel von **{upgrade.title()}** erreicht.")
+            else:
+                await ctx.send(f"{ctx.author.mention} Du hast nicht genügend Stat-Points. Du bekommst mehr, wenn du auflevelst.")
         else:
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -price}})
-            self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {"multiplier": amount}})
-            await ctx.send(f"{ctx.author.mention} Du hast deinen XP-Multiplier auf **Level {level}** erweitert")
-
-    @upgrades.command()
-    @commands.cooldown(1, 3, commands.BucketType.user)
-    async def money(self, ctx, amount: int = 1):
-        """Erhöht die Anzahl an Dollar pro Nachricht"""
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
-        u = self.con["upgrades"].find_one({"_id": ctx.author.id})
-        level = u["money"] + amount
-        price = get_upgrade_price(money_lvl=level)
-        if bal < price:
-            await ctx.send(
-                f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
-        elif level > 50:
-            await ctx.send(f"{ctx.author.mention} Du kannst nicht höher als Level 50 upgraden")
-        else:
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -price}})
-            self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {"money": amount}})
-            await ctx.send(f"{ctx.author.mention} Du hast deine Dollar pro Nachricht auf **Level {level}** erweitert")
-
-    @upgrades.command()
-    @commands.cooldown(1, 3, commands.BucketType.user)
-    async def income(self, ctx, amount: int = 1):
-        """Erhöht die Anzahl an Dollar, die du pro 10 Minuten bekommst"""
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
-        u = self.con["upgrades"].find_one({"_id": ctx.author.id})
-        level = u["income"] + amount
-        price = get_upgrade_price(income_lvl=level)
-        if bal < price:
-            await ctx.send(
-                f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
-        elif level > 50:
-            await ctx.send(f"{ctx.author.mention} Du kannst nicht höher als Level 50 upgraden")
-        else:
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -price}})
-            self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {"income": amount}})
-            await ctx.send(f"{ctx.author.mention} Du hast dein Einkommen auf **Level {level}** erweitert")
-
-    @upgrades.command()
-    @commands.cooldown(1, 3, commands.BucketType.user)
-    async def crit(self, ctx, amount: int = 1):
-        """Erhöht die Wahrscheilichkeit, dass du doppelt so viel Geld und XP für eine Nachricht bekommst"""
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
-        u = self.con["upgrades"].find_one({"_id": ctx.author.id})
-        level = u["crit"] + amount
-        price = get_upgrade_price(crit_lvl=level)
-        if bal < price:
-            await ctx.send(
-                f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
-        elif level > 50:
-            await ctx.send(f"{ctx.author.mention} Du kannst nicht höher als Level 50 upgraden")
-        else:
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -price}})
-            self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {"crit": amount}})
-            await ctx.send(f"{ctx.author.mention} Du hast deine kritischen Treffer auf **Level {level}** erweitert")
-
-    @upgrades.command()
-    @commands.cooldown(1, 3, commands.BucketType.user)
-    async def power(self, ctx, amount: int = 1):
-        """Erhöht die Anzahl an Dollar, die du bei einem Geldregen bekommst (1%)"""
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
-        u = self.con["upgrades"].find_one({"_id": ctx.author.id})
-        level = u["power"] + amount
-        price = get_upgrade_price(power_lvl=level)
-        if bal < price:
-            await ctx.send(
-                f"{ctx.author.mention} Du brauchst mindestens **{price}** Dollar, um dieses Upgrade zu kaufen")
-        elif level > 50:
-            await ctx.send(f"{ctx.author.mention} Du kannst nicht höher als Level 50 upgraden")
-        else:
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -price}})
-            self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {"power": amount}})
-            await ctx.send(f"{ctx.author.mention} Du hast deinen Geldregen auf **Level {level}** erweitert")
+            await ctx.send(f"{ctx.author.mention} Ich konnte dieses Upgrade nicht finden.")
 
     @commands.group(usage='todo [add|remove|clear]', case_insensitive=True)
     async def todo(self, ctx):
@@ -375,7 +286,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 return
             if result1:
                 result = result1
-                description = f"\n**Verkaufspreis**: {result['sell']} Dollar"
+                description = f"\n**Einkaufspreis**: {result['buy']} Dollar"
             else:
                 result = result2
                 description = ""
@@ -384,7 +295,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     description += f"\n**Bruch-Wahrscheinlichkeit**: {item['break'] * 100}%\n**Geld-Drops**: {item['cash']} Dollar\n**Item-Drops**: {item['items']} Items\n\n:bar_chart: **Item-Drop-Wahrscheinlichkeiten**:"
                     for drop, prop in reversed(list(item["props"].items())):
                         description += f"\n> {emojis[drop]} **{drop}** - {int(prop*100)}%"
-            embed.description = f"**Beschreibung**: {result['description']}\n**Emoji**: {result['emoji']}\n**Einkaufspreis**: {result['buy']} Dollar" + description
+            embed.description = f"**Beschreibung**: {result['description']}\n**Emoji**: {result['emoji']}\n**Verkaufspreis**: {result['sell']} Dollar" + description
             await ctx.send(embed=embed)
 
 
