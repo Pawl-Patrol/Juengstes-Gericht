@@ -241,35 +241,6 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             description=f"Das Item **{item['_id'].title()}** wurde entfernt"
         ))
 
-    @commands.group(usage="use <item>", case_insensitive=True, aliases=["open"])
-    @commands_or_casino_only()
-    async def use(self, ctx):
-        """Benutzt ein Item aus deinem Inventar"""
-        if ctx.invoked_subcommand is None:
-            await ctx.send(embed=discord.Embed(
-                color=discord.Color.red(),
-                title="Welches Item möchtest du benutzen?",
-                description="Bitte wähle ein Item aus deinem Inventar"
-            ))
-
-    @use.command(aliases=["boost"])
-    @has_item("booster")
-    async def booster(self, ctx):
-        """Verdoppelt 1 Stunde lang deine XP"""
-        mult = self.con["stats"].find_one({"_id": ctx.author.id}, {"multiplier": 1})["multiplier"]
-        if mult > 1:
-            await ctx.send(f"{ctx.author.mention} Du hast bereits einen XP-Boost aktiv!")
-        else:
-            remove_item(ctx.author, "boost", 1)
-            self.con["stats"].update({"_id": ctx.author.id}, {"$set": {"multiplier": 2}})
-            self.timer_manager.create_timer('boost_expire', datetime.timedelta(hours=1), args=(ctx.author,))
-            await ctx.send(f"{ctx.author.mention} Du erhälst für 1 Stunde doppelt XP!")
-
-    @commands.Cog.listener()
-    async def on_boost_expire(self, user):
-        """Wird aufgerufen, wenn der XP-Boost eines Nutzers abgelaufen ist"""
-        self.con["stats"].update({"_id": user.id}, {"$set": {"multiplier": 1}})
-
     @commands.command(usage="transferitem <user> <item>", aliases=["giveitem"])
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def transferitem(self, ctx, user: discord.User, item: is_item, amount: int = 1):
