@@ -14,7 +14,7 @@ class Pets(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         self.con = con
 
     @commands.group(case_insensitive=True)
-    #@commands_only()
+    @commands_only()
     @has_pet()
     @commands.cooldown(1, 2, commands.BucketType.user)
     async def pet(self, ctx):
