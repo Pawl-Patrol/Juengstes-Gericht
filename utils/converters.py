@@ -68,15 +68,3 @@ class is_item(commands.Converter):
                 return "all"
             else:
                 raise commands.BadArgument('Item konnte nicht gefunden werden')
-
-
-class is_buyable_item(commands.Converter):
-    async def convert(self, ctx, argument):
-        item = con["items"].find_one({"_id": argument.lower()})
-        if item:
-            if item["buy"]:
-                return item
-            else:
-                raise commands.BadArgument('Dieses Item kann man nicht kaufen')
-        else:
-            raise commands.BadArgument('Item konnte nicht gefunden werden')
