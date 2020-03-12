@@ -71,7 +71,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         page += 1
                         await menu.edit(embed=create_embed(page))
 
-    @commands.command(usage='buy <item> [amount]')
+    @commands.command(usage='buy item=amount')
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands_or_casino_only()
     async def buy(self, ctx, *, args: str):
@@ -106,7 +106,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         else:
             await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden oder es ist nicht käuflich.")
 
-    @commands.command(usage='sell <item> [amount]')
+    @commands.command(usage='sell item=amount')
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands_or_casino_only()
     async def sell(self, ctx, *, args: str):
@@ -293,7 +293,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.command(usage="delitem <item>")
     @commands.cooldown(1, 3, commands.BucketType.user)
     @owner_only()
-    async def delitem(self, ctx, item: is_item):
+    async def delitem(self, ctx, item):
         """Entfernt ein Item"""
         self.con["items"].delete_one({"_id": item["_id"]})
         await ctx.send(embed=discord.Embed(
@@ -302,21 +302,35 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             description=f"Das Item **{item['_id'].title()}** wurde entfernt"
         ))
 
-    @commands.command(usage="transferitem <user> <item>", aliases=["giveitem"])
+    @commands.command(usage="transferitem <user> item=amount", aliases=["giveitem"])
     @commands.cooldown(1, 3, commands.BucketType.user)
-    async def transferitem(self, ctx, user: discord.User, item: is_item, amount: int = 1):
-        count = self.con["inventory"].find_one(
-            {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
-        if not count:
-            await ctx.send(embed=discord.Embed(
-                color=discord.Color.red(),
-                title="Verkaufen nicht möglich",
-                description=f"Du hast nicht genügend Items"
-            ))
+    async def transferitem(self, ctx, user: discord.User, *, args: str):
+        args = args.split("=")
+        if len(args) == 1:
+            args.append(1)
+        elif len(args) != 2:
+            await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal vergeben möchtest, benutze `{ctx.prefix}transferitem item=3`")
+            return
+        arg = args[0]
+        amount = int(args[1])
+        item = self.con["items"].find_one({"_id": arg})
+        if not item:
+            item = self.con["tools"].find_one({"_id": arg})
+        if item:
+            count = self.con["inventory"].find_one(
+                {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
+            if not count:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Verkaufen nicht möglich",
+                    description=f"Du hast nicht genügend Items"
+                ))
+            else:
+                remove_item(ctx.author, item["_id"], amount)
+                self.con["inventory"].update({"_id": user.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
+                await ctx.send(f"{user.mention} Du hast {amount}x {item['_id'].title()} {item['emoji']} von **{ctx.author}** bekommen")
         else:
-            remove_item(ctx.author, item["_id"], amount)
-            self.con["inventory"].update({"_id": user.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
-            await ctx.send(f"{user.mention} Du hast {amount}x {item['_id'].title()} {item['emoji']} von **{ctx.author}** bekommen")
+            await ctx.send(f"{user.mention} Ich konnte dieses Item nicht finden.")
 
 
 def setup(bot):
