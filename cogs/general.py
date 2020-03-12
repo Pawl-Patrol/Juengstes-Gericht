@@ -197,6 +197,8 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     amount = int(amount)
                 elif amount.lower() in ["max", "all"]:
                     amount = 10 - u[upgrade.lower()]
+                    if amount > stat_points:
+                        amount = stat_points
                 else:
                     await ctx.send(f"{ctx.author.mention} Bitte gib eine Zahl oder max an. Z.b. `{ctx.prefix}upgrade crit max`")
                     return
