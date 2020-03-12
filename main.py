@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks, timers
 from utils.help_command import HelpCommand
-from utils.utils import convert_upgrade_levels
+from utils.utils import convert_upgrade_levels, lvlcalc
 from data.auto_info import auto_info
 import pymongo
 import os
@@ -12,7 +12,7 @@ import random
 import math
 import asyncio
 
-connection = pymongo.MongoClient("mongodb+srv://Bot:8EMWmmUetbIBpdwc@cluster0-jkksz.mongodb.net/test?retryWrites=true&w=majority")["Dc-Server"]
+connection = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
 
 
 def prefix_callable(bot, msg):
@@ -27,7 +27,7 @@ class Bot(commands.Bot):
                          help_command=HelpCommand(),
                          case_insensitive=True,
                          owner_id=376100578683650048)
-        self.token = "NjU5OTIxMTUyMjI2ODg1NjMy.Xmjf_w.7jBFTUlW2AaItqJN9nyhhm0iFyY"
+        self.token = os.environ.get("DISCORD_TOKEN")
         self.con = connection
         self.timer_manager = timers.TimerManager(self)
         with open("data/reaction_roles.json", "r", encoding="utf8") as f:
@@ -588,17 +588,6 @@ class Bot(commands.Bot):
                 title='Command-Error',
                 description=str(error)
             ))
-
-
-def lvlcalc(xp):
-    """Errechnet aus den gegebenen XP das Level und den Fortschritt bis zum nächsten Level"""
-    level = 0
-    cap = 100
-    while xp >= cap:
-        level += 1
-        xp -= cap
-        cap += 5 * (level * level) + 50 * level + 100
-    return level, xp, cap
 
 
 if __name__ == '__main__':
