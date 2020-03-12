@@ -17,7 +17,7 @@ connection = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
 
 def prefix_callable(bot, msg):
     user_id = bot.user.id
-    return [f'<@!{user_id}> ', f'<@{user_id}> ', 'k ']
+    return [f'<@!{user_id}> ', f'<@{user_id}> ', 'ok ']
 
 
 class Bot(commands.Bot):
