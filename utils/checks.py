@@ -36,14 +36,14 @@ def min_lvl(lvl):
 
 def commands_only():
     async def predicate(ctx):
-        return ctx.channel.id == cmds or ctx.guild.id == 656875692163596308
+        return ctx.channel.id == cmds or ctx.guild.id == 590976073555116081
 
     return commands.check(predicate)
 
 
 def casino_only():
     async def predicate(ctx):
-        if ctx.channel.id != casino and ctx.guild.id != 656875692163596308:
+        if ctx.channel.id != casino and ctx.guild.id != 590976073555116081:
             raise commands.CommandError(f'Gambling ist nur in <#{casino}> verfügbar')
         return True
 
@@ -52,7 +52,7 @@ def casino_only():
 
 def commands_or_casino_only():
     async def predicate(ctx):
-        return ctx.channel.id == cmds or ctx.channel.id == casino or ctx.guild.id == 656875692163596308
+        return ctx.channel.id == cmds or ctx.channel.id == casino or ctx.guild.id == 590976073555116081
 
     return commands.check(predicate)
 
