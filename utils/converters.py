@@ -53,18 +53,3 @@ class bet(commands.Converter):
             raise commands.CommandError('Du musst mindestens **1** :dollar: setzen')
         else:
             return argument
-
-
-class is_item(commands.Converter):
-    async def convert(self, ctx, argument):
-        item = con["items"].find_one({"_id": argument.lower()})
-        if item:
-            return item
-        else:
-            item = con["tools"].find_one({"_id": argument.lower()})
-            if item:
-                return item
-            elif ctx.command.name == "sell" and argument.lower() == "all":
-                return "all"
-            else:
-                raise commands.BadArgument('Item konnte nicht gefunden werden')
