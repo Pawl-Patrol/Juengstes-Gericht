@@ -201,8 +201,8 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     await ctx.send(f"{ctx.author.mention} Bitte gib eine Zahl oder max an. Z.b. `{ctx.prefix}upgrade crit max`")
                     return
                 if u[upgrade.lower()] + amount <= 10:
-                    self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {upgrade.lower(): 1}})
-                    await ctx.send(f"{ctx.author.mention} Du hast **{upgrade.title()}** auf Level **{u[upgrade.lower()]+1}** erweitert")
+                    self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {upgrade.lower(): amount}})
+                    await ctx.send(f"{ctx.author.mention} Du hast **{upgrade.title()}** auf Level **{u[upgrade.lower()]+amount}** erweitert")
                 elif u[upgrade.lower()] == 10:
                     await ctx.send(f"{ctx.author.mention} Du hast bereits das Maximallevel von **{upgrade.title()}** erreicht.")
                 else:
