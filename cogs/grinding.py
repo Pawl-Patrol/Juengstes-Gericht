@@ -313,7 +313,7 @@ async def pet_action(ctx, action, cost: bool = True):
         dif = 100 - (stats[action] + random.randint(25, 35))
         if dif < 0:
             dif = 0
-        t = datetime.datetime.utcnow() - datetime.timedelta(seconds=20*dif)
+        t = datetime.datetime.utcnow() - datetime.timedelta(seconds=120*dif)
         xp = random.randint(15, 25)
         con["pets"].update({"_id": ctx.author.id}, {"$set": {action: t}, "$inc": {"xp": xp}})
         if cost:
