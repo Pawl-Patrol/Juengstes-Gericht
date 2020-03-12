@@ -18,6 +18,7 @@ def remove_item(user, item, amount):
 class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     def __init__(self, bot):
+        self.emoji = ":money_with_wings:"
         self.bot = bot
         self.con = connection
         self.timer_manager = timers.TimerManager(bot)
