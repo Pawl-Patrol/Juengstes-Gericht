@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands, tasks, timers
 from utils.help_command import HelpCommand
-from utils.upgrades import convert_upgrade_levels
+from utils.utils import convert_upgrade_levels
 from data.auto_info import auto_info
 import pymongo
 import os
@@ -12,12 +12,12 @@ import random
 import math
 import asyncio
 
-connection = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
+connection = pymongo.MongoClient("mongodb+srv://Bot:8EMWmmUetbIBpdwc@cluster0-jkksz.mongodb.net/test?retryWrites=true&w=majority")["Dc-Server"]
 
 
 def prefix_callable(bot, msg):
     user_id = bot.user.id
-    return [f'<@!{user_id}> ', f'<@{user_id}> ', 'ok ']
+    return [f'<@!{user_id}> ', f'<@{user_id}> ', 'k ']
 
 
 class Bot(commands.Bot):
@@ -27,7 +27,7 @@ class Bot(commands.Bot):
                          help_command=HelpCommand(),
                          case_insensitive=True,
                          owner_id=376100578683650048)
-        self.token = os.environ.get("DISCORD_TOKEN")
+        self.token = "NjU5OTIxMTUyMjI2ODg1NjMy.Xmjf_w.7jBFTUlW2AaItqJN9nyhhm0iFyY"
         self.con = connection
         self.timer_manager = timers.TimerManager(self)
         with open("data/reaction_roles.json", "r", encoding="utf8") as f:
@@ -52,7 +52,6 @@ class Bot(commands.Bot):
         super().run(self.token, reconnect=True)
 
     async def on_ready(self):
-        self.income.start()
         self.voice_xp.start()
         await self.change_presence(activity=discord.Activity(type=2, name=f"ok"), status=3)
         print("Eingeloggt als", self.user.name)
@@ -178,7 +177,6 @@ class Bot(commands.Bot):
         """Erstellt für den Member ein Profil in der Datenbank"""
         stats = {
             "_id": member.id,
-            "multiplier": 1,
             "message_xp": 0,
             "voice_xp": 0,
             "total_xp": 0,
@@ -188,31 +186,31 @@ class Bot(commands.Bot):
             "message_cd": 0
         }
         self.con["stats"].insert_one(stats)
+
+    def set_standard_upgrades(self, member):
+        """Erstellt für den Member ein Profil für die Upgrades in der Datenbank"""
         upgrades = {
             "_id": member.id,
+            "total": 0,
             "multiplier": 0,
             "money": 0,
-            "income": 0,
-            "crit": 0,
-            "power": 0
+            "crit": 0
         }
         self.con["upgrades"].insert_one(upgrades)
 
     async def add_xp(self, member, exp_type):
         """Gibt dem Member XP und Geld"""
         u = self.con["upgrades"].find_one({"_id": member.id})
-        xp_mult = self.con["stats"].find_one({"_id": member.id})["multiplier"]
-        mult, money, _, crit, power = convert_upgrade_levels(u['multiplier'], u['money'], u['income'], u['crit'], u['power'])
-        inc_exp = round(random.randint(15, 25) * mult / 100) * xp_mult
+        if not u:
+            self.set_standard_upgrades(member)
+        mult, money, crit = convert_upgrade_levels(u['multiplier'], u['money'], u['crit'])
+        inc_exp = round(random.randint(15, 25) * mult / 100)
         inc_bal = money
         inc_bank = round(money * 2.5)
         if crit > random.randint(0, 100):
             inc_exp = inc_exp * 2
             inc_bal = inc_bal * 2
             inc_bank = inc_bank * 2
-        if random.randint(0, 100) == 0:
-            inc_bal += power
-            inc_bank += power
         self.con["stats"].update_one({"_id": member.id}, {
             "$set": {
                 "message_cd": int(time.time())
@@ -263,7 +261,7 @@ class Bot(commands.Bot):
             color=discord.Color.blue(),
             title='Willkommen zurück',
             description=f'{member.mention} Deine AFK-Nachricht wurde aufgehoben'),
-            delete_after=5)
+            delete_after=3)
 
     async def check_afk(self, user, channel):
         """Schaut, ob der User AFK ist und sendet ggf. seine AFK-Nachricht"""
@@ -275,23 +273,7 @@ class Bot(commands.Bot):
                 description=afk["message"],
                 timestamp=afk["time"]
             )
-            await channel.send(embed=embed, delete_after=10)
-
-    @tasks.loop(minutes=10)
-    async def income(self):
-        for guild in self.guilds:
-            for member in guild.members:
-                if member.bot:
-                    continue
-                if guild.id != self.config["guild_id"]:
-                    continue
-                u = self.con["upgrades"].find_one({"_id": member.id})
-                _, _, income, _, _ = convert_upgrade_levels(0, 0, u['income'], 0, 0)
-                if income:
-                    self.con["stats"].update_one({"_id": member.id}, {
-                        "$inc": {
-                            "balance": income
-                        }})
+            await channel.send(embed=embed, delete_after=8)
 
     @tasks.loop(minutes=1)
     async def voice_xp(self):
@@ -523,7 +505,7 @@ class Bot(commands.Bot):
                     if role:
                         await role.delete()
 
-    async def on_command_error(self, ctx, error):
+    async def oon_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.CheckFailure):
