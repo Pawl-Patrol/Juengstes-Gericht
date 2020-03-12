@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands, timers
 from main import connection
 from utils.checks import commands_or_casino_only, owner_only
-from utils.converters import is_buyable_item, is_item
+from utils.converters import is_item
 import asyncio
 
 
@@ -74,30 +74,44 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.command(usage='buy <item> [amount]')
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands_or_casino_only()
-    async def buy(self, ctx, item: is_buyable_item, amount: int = 1,):
+    async def buy(self, ctx, *, args: str):
         """Kauft ein Item"""
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
-        if bal < item["buy"] * amount:
-            await ctx.send(embed=discord.Embed(
-                color=discord.Color.red(),
-                title="Du hast nicht genügend Geld",
-                description=f"Du brauchst mindestens **{item['buy'] * amount}** :dollar:"
-            ))
+        args = args.split("=")
+        if len(args) == 1:
+            args.append(1)
+        elif len(args) != 2:
+            await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal kaufen möchtest, benutze `{ctx.prefix}buy item=3`")
+            return
+        arg = args[0]
+        amount = int(args[1])
+        item = self.con["items"].find_one({"_id": arg})
+        if not item:
+            item = self.con["tools"].find_one({"_id": arg, "buy": {"$gt": 0}})
+        if item:
+            bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
+            if bal < item["buy"] * amount:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Du hast nicht genügend Geld",
+                    description=f"Du brauchst mindestens **{item['buy'] * amount}** :dollar:"
+                ))
+            else:
+                self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
+                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -(item["buy"] * amount)}})
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.green(),
+                    title="Transaktion erfolgreich",
+                    description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{item['buy'] * amount}** :dollar: gekauft"
+                ))
         else:
-            self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -(item["buy"] * amount)}})
-            await ctx.send(embed=discord.Embed(
-                color=discord.Color.green(),
-                title="Transaktion erfolgreich",
-                description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{item['buy'] * amount}** :dollar: gekauft"
-            ))
+            await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden oder es ist nicht käuflich.")
 
     @commands.command(usage='sell <item> [amount]')
     @commands.cooldown(1, 3, commands.BucketType.user)
-    #@commands_or_casino_only()
-    async def sell(self, ctx, item: is_item, amount = 1):
+    @commands_or_casino_only()
+    async def sell(self, ctx, *, args: str):
         """Verkauft ein Item"""
-        if item.lower() == "all":
+        if args.lower() == "all":
             inv = self.con["inventory"].find_one({"_id": ctx.author.id})
             if not inv:
                 await ctx.send(embed=discord.Embed(
@@ -115,7 +129,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 if message.content.lower() in ["n", "nein", "no"]:
                     await msg.edit(content="*Aktion abgebrochen*")
                     return
-                prices = {i["_id"]: i["sell"] for i in list(self.con["items"].find()) + list(self.con["tools"].find()   )}
+                prices = {i["_id"]: i["sell"] for i in list(self.con["items"].find()) + list(self.con["tools"].find())}
                 post = {}
                 bal = 0
                 i = 0
@@ -133,23 +147,37 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     description=f"Du hast **{i}** Items für **{bal}** :dollar: verkauft"
                 ))
         else:
-            count = self.con["inventory"].find_one(
-                {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
-            if not count:
-                await ctx.send(embed=discord.Embed(
-                    color=discord.Color.red(),
-                    title="Verkaufen nicht möglich",
-                    description=f"Du hast nicht genügend Items"
-                ))
+            args = args.split("=")
+            if len(args) == 1:
+                args.append(1)
+            elif len(args) != 2:
+                await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal verkaufen möchtest, benutze `{ctx.prefix}sell item=3`")
+                return
+            arg = args[0]
+            amount = int(args[1])
+            item = self.con["items"].find_one({"_id": arg})
+            if not item:
+                item = self.con["tools"].find_one({"_id": arg})
+            if item:
+                count = self.con["inventory"].find_one(
+                    {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
+                if not count:
+                    await ctx.send(embed=discord.Embed(
+                        color=discord.Color.red(),
+                        title="Verkaufen nicht möglich",
+                        description=f"Du hast nicht genügend Items"
+                    ))
+                else:
+                    sell = item['sell'] * amount
+                    self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": sell}})
+                    remove_item(ctx.author, item["_id"], amount)
+                    await ctx.send(embed=discord.Embed(
+                        color=discord.Color.green(),
+                        title="Transaktion erfolgreich",
+                        description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{sell}** :dollar: verkauft"
+                    ))
             else:
-                sell = item['sell'] * amount
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": sell}})
-                remove_item(ctx.author, item["_id"], amount)
-                await ctx.send(embed=discord.Embed(
-                    color=discord.Color.green(),
-                    title="Transaktion erfolgreich",
-                    description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{sell}** :dollar: verkauft"
-                ))
+                await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
 
     @commands.command(usage="inventory [page]", aliases=["inv"])
     @commands.cooldown(1, 3, commands.BucketType.user)
