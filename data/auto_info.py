@@ -1,6 +1,6 @@
 import discord
 
-auto_info = {
+auto_info = [
     discord.Embed(
         color=0xFF9AA2,
         title="Levelsystem",
@@ -21,4 +21,4 @@ auto_info = {
         title="Nitro Boosting & Customroles",
         description="**❥ ~ __Was bekomme ich, wenn ich booste__?**\n> ❧ ~ Du darfst dir eine eigene Rolle erstellen\n> ❧ ~ Und du erhälst sofortigen Zugriff auf die Customrole Commands\n> ❧ ~ Außerdem bekommst du 10000 :dollar:\n**❥ ~ __Customrole Commands__:**\n> ❧ ~ Mit `ok crole create` kannst du deine Rolle erstellen\n> ❧ ~ Danach kannst du sie jederzeit mit `ok name` & `ok color` bearbeiten\n> ❧ ~ Außerdem kannst du dir mit `ok random` eine zufällige Farbe verleihen"
     )
-}
+]
