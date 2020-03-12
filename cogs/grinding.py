@@ -14,6 +14,7 @@ import asyncio
 class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     def __init__(self, bot):
+        self.emoji = ":pick:"
         self.bot = bot
         self.con = con
         with open("data/crafting.json", "r", encoding="UTF-8") as f:
