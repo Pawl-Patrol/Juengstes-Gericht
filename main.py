@@ -171,6 +171,8 @@ class Bot(commands.Bot):
                 "balance": 50
             }})
         await channel.send(f"{m.author.mention} Du hast das Wort erraten und **50** :dollar: & **100** XP bekommen!", delete_after=10)
+        await asyncio.sleep(10)
+        await m.delete()
 
     def set_standard_stats(self, member):
         """Erstellt für den Member ein Profil in der Datenbank"""
