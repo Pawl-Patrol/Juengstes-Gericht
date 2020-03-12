@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from itertools import groupby
+import datetime
 
 
 class HelpCommand(commands.HelpCommand):
@@ -26,13 +26,12 @@ class HelpCommand(commands.HelpCommand):
         ))
 
     async def send_bot_help(self, mapping):
-        bot = self.context.bot
         embed = discord.Embed(
             color=discord.Color.blue(),
-            description=f"**[Server Invite](https://discord.gg/eJ8rfpr)**\nServer Prefix: `{self.clean_prefix.replace(' ', '')}`\n"
+            description=f"**[Server Invite](https://discord.gg/eJ8rfpr)**\nServer Prefix: `{self.clean_prefix.replace(' ', '')}`\nFür mehr Info, nutze `{self.clean_prefix}help <command>`\n"
         )
         total = 0
-        for cog_name, cog in bot.cogs.items():
+        for cog_name, cog in self.context.bot.cogs.items():
             cmds = sorted(cog.get_commands(), key=lambda c: c.name)
             if len(cmds) == 0:
                 continue
@@ -40,6 +39,8 @@ class HelpCommand(commands.HelpCommand):
             cmd_string = " ".join([f"`{c.name}`" for c in cmds])
             embed.description += f"\n**{cog.emoji} {cog_name.upper()}** ({len(cmds)} Commands)\n{cmd_string}\n"
         embed.title = f'Alle Commands ({total} Commands)'
+        embed.set_footer(text=f"{self.context.guild.name} ({self.context.guild.member_count} Mitglieder)")
+        embed.timestamp = datetime.datetime.utcnow()
         await self.context.send(embed=embed)
 
     async def send_cog_help(self, cog):
