@@ -5,6 +5,7 @@ def convert_upgrade_levels(mult_lvl, money_lvl, crit_lvl):
     crit = round(crit_lvl * 1.5)
     return mult, money, crit
 
+
 def lvlcalc(xp):
     """Errechnet aus den gegebenen XP das Level und den Fortschritt bis zum nächsten Level"""
     level = 0
