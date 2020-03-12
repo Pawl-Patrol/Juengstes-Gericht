@@ -64,6 +64,8 @@ class is_item(commands.Converter):
             item = con["tools"].find_one({"_id": argument.lower()})
             if item:
                 return item
+            elif ctx.command.name == "sell" and argument.lower() == "all":
+                return "all"
             else:
                 raise commands.BadArgument('Item konnte nicht gefunden werden')
 
