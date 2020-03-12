@@ -162,7 +162,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.group(usage='upgrade <item>', aliases=['u', 'upgrade', 'tier'], case_insensitive=True)
     #@commands_or_casino_only()
-    async def upgrades(self, ctx, upgrade: str = None, amount: int = 1):
+    async def upgrades(self, ctx, upgrade: str = None, amount: str = "1"):
         """Zeigt deine Upgrades"""
         stats = self.con["stats"].find_one({"_id": ctx.author.id})
         level, _, _ = lvlcalc(stats["total_xp"])
@@ -193,7 +193,14 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(embed=embed)
         elif upgrade.lower() in ["multiplier", "money", "crit"]:
             if stat_points > 0:
-                if u[upgrade.lower()] + amount < 10:
+                if amount.isdigit():
+                    amount = int(amount)
+                elif amount.lower() in ["max", "all"]:
+                    amount = 10 - u[upgrade.lower()]
+                else:
+                    await ctx.send(f"{ctx.author.mention} Bitte gib eine Zahl oder max an. Z.b. `{ctx.prefix}upgrade crit max`")
+                    return
+                if u[upgrade.lower()] + amount <= 10:
                     self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {upgrade.lower(): 1}})
                     await ctx.send(f"{ctx.author.mention} Du hast **{upgrade.title()}** auf Level **{u[upgrade.lower()]+1}** erweitert")
                 elif u[upgrade.lower()] == 10:
