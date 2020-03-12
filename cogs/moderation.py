@@ -10,6 +10,7 @@ import json
 class Moderation(commands.Cog):
 
     def __init__(self, bot):
+        self.emoji = ":tools:"
         self.bot = bot
         self.timer_manager = timers.TimerManager(bot)
         with open("data/config.json", "r") as f:
