@@ -11,6 +11,7 @@ import random
 
 class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
+        self.emoji = ":dizzy:"
         self.bot = bot
         self.con = connection
         with open("data/config.json", "r") as f:
