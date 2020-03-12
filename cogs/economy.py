@@ -25,7 +25,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.command(usage="shop [page]", aliases=['market', 'store'])
     @commands.cooldown(1, 3, commands.BucketType.user)
-    #@commands_or_casino_only()
+    @commands_or_casino_only()
     async def shop(self, ctx, page: int = 1):
         """Zeigt den Shop"""
 
@@ -94,26 +94,62 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.command(usage='sell <item> [amount]')
     @commands.cooldown(1, 3, commands.BucketType.user)
-    @commands_or_casino_only()
-    async def sell(self, ctx, item: is_item, amount: int = 1):
+    #@commands_or_casino_only()
+    async def sell(self, ctx, item: is_item, amount = 1):
         """Verkauft ein Item"""
-        count = self.con["inventory"].find_one(
-            {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
-        if not count:
-            await ctx.send(embed=discord.Embed(
-                color=discord.Color.red(),
-                title="Verkaufen nicht möglich",
-                description=f"Du hast nicht genügend Items"
-            ))
+        if item.lower() == "all":
+            inv = self.con["inventory"].find_one({"_id": ctx.author.id})
+            if not inv:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Verkaufen nicht möglich",
+                    description=f"Du hast nicht genügend Items"
+                ))
+            else:
+                msg = await ctx.send(f"{ctx.author.mention} Möchtest du wirklich **alle deine Items** verkaufen? (ja/nein)")
+                try:
+                    message = await ctx.bot.wait_for("message", check=lambda m: m.content.lower() in ["j", "ja", "y", "yes", "n", "nein", "no"] and m.author == ctx.author, timeout=30)
+                except asyncio.TimeoutError:
+                    await msg.edit(content="*Aktion abgebrochen*")
+                    return
+                if message.content.lower() in ["n", "nein", "no"]:
+                    await msg.edit(content="*Aktion abgebrochen*")
+                    return
+                prices = {i["_id"]: i["sell"] for i in list(self.con["items"].find()) + list(self.con["tools"].find()   )}
+                post = {}
+                bal = 0
+                i = 0
+                a = False
+                for item, count in inv.items():
+                    if item != "_id":
+                        post[item] = 1
+                        i += count
+                        bal += count * prices[item]
+                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": bal}})
+                self.con["inventory"].delete_one({"_id": ctx.author.id})
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.green(),
+                    title="Transaktion erfolgreich",
+                    description=f"Du hast **{i}** Items für **{bal}** :dollar: verkauft"
+                ))
         else:
-            sell = item['sell'] * amount
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": sell}})
-            remove_item(ctx.author, item["_id"], amount)
-            await ctx.send(embed=discord.Embed(
-                color=discord.Color.green(),
-                title="Transaktion erfolgreich",
-                description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{sell}** :dollar: verkauft"
-            ))
+            count = self.con["inventory"].find_one(
+                {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
+            if not count:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Verkaufen nicht möglich",
+                    description=f"Du hast nicht genügend Items"
+                ))
+            else:
+                sell = item['sell'] * amount
+                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": sell}})
+                remove_item(ctx.author, item["_id"], amount)
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.green(),
+                    title="Transaktion erfolgreich",
+                    description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{sell}** :dollar: verkauft"
+                ))
 
     @commands.command(usage="inventory [page]", aliases=["inv"])
     @commands.cooldown(1, 3, commands.BucketType.user)
