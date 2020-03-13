@@ -150,19 +150,21 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
             color = discord.Color.green(),
-            title=f"{emojis[pickaxe]} ***Du hast ein paar Items abgebaut!*** ({pickaxe.title()})",
-            description=f"> "
+            title=f"{emojis[pickaxe]} Du hast ein paar Items abgebaut!",
+            description=""
         )
+        if random.random() < tool["break"]:
+            embed.description = f"Oh Nein! Beim Abbauen ist deine Spitzhacke kaputt gegangen! ({int(tool['break']*100)}% Chance)"
+            remove_item(ctx.author, pickaxe, 1)
         rewards = numpy.random.choice(list(tool["props"].keys()), drops, p=list(tool["props"].values()))
         loot = {}
         for reward in rewards:
             loot[reward] = loot.get(reward, 0) + 1
         for item, count in loot.items():
-            embed.description += f"{count}x {emojis[item]} "
-        if random.random() < tool["break"]:
-            embed.description += f"\n:worried: **Beim Abbauen ist deine Spitzhacke kaputt gegangen!** ({int(tool['break']*100)}% Chance)"
-            remove_item(ctx.author, pickaxe, 1)
+            embed.description += f"\n> **{count}x {item.title()}** {emojis[item]}"
         self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
+        embed.set_footer(text=f"mit {pickaxe.title()}")
+        embed.timestamp = datetime.datetime.utcnow()
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -187,19 +189,21 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
             color = discord.Color.green(),
-            title=f"{emojis[fishing_rod]} ***Du hast nach Items gefischt!*** ({fishing_rod.title()})",
-            description=f"> "
+            title=f"{emojis[fishing_rod]} Du hast nach Items gefischt!",
+            description=""
         )
+        if random.random() < tool["break"]:
+            embed.description = f"Oh Nein! Beim Fischen ist deine Angel kaputt gegangen! ({int(tool['break']*100)}% Chance)"
+            remove_item(ctx.author, fishing_rod, 1)
         rewards = numpy.random.choice(list(tool["props"].keys()), drops, p=list(tool["props"].values()))
         loot = {}
         for reward in rewards:
             loot[reward] = loot.get(reward, 0) + 1
         for item, count in loot.items():
-            embed.description += f"{count}x {emojis[item]} "
-        if random.random() < tool["break"]:
-            embed.description += f"\n:worried: **Beim Abbauen ist deine Angel kaputt gegangen!** ({int(tool['break']*100)}% Chance)"
-            remove_item(ctx.author, fishing_rod, 1)
+            embed.description += f"\n> **{count}x {item.title()}**   {emojis[item]}"
         self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
+        embed.set_footer(text=f"mit {fishing_rod.title()}")
+        embed.timestamp = datetime.datetime.utcnow()
         await ctx.send(embed=embed)
 
     @commands.group(case_insensitive=True)
