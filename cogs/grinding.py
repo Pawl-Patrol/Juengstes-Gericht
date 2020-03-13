@@ -298,12 +298,14 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
 
 async def pet_action(ctx, action, cost: bool = True):
-    bal = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
     pet = con["pets"].find_one({"_id": ctx.author.id})
     stats = convert_pet(pet)
-    if bal < 50:
-        raise commands.CommandError(f"{ctx.author.mention} Du brauchst mindestens **50** Dollar.")
-    elif stats[action] > 80:
+    if cost:
+        bal = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
+        if bal < 50:
+            raise commands.CommandError(f"{ctx.author.mention} Du brauchst mindestens **50** Dollar.")
+            return
+    if stats[action] > 80:
         return False
     else:
         dif = 100 - (stats[action] + random.randint(25, 35))
