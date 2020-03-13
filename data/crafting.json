@@ -2,19 +2,25 @@
     "rohstoffe":
     {
         "juwel": {
-            "juwelfragment": 10,
-            "sternenstaub": 3,
-            "spinnwebe": 2
+            "juwelfragment": 15,
+            "sternenstaub": 5,
+            "edelstein": 3,
+            "komet": 3
         },
         "infinity ingot": {
-            "sternenstaub": 15,
-            "komet": 10,
-            "juwel": 7
+            "ziegelstein": 80,
+            "spinnwebe": 65,
+            "sternenstaub": 35,
+            "edelstein": 25,
+            "komet": 15,
+            "juwel": 10
         },
         "neutron ingot": {
+            "ziegelstein": 50,
             "neutron nugget": 10,
-            "sternenstaub": 3,
-            "komet": 3,
+            "sternenstaub": 8,
+            "edelstein": 5,
+            "komet": 4,
             "juwel": 3
         }
     },
@@ -22,13 +28,15 @@
     {
         "stern spitzhacke": {
             "pauls spitzhacke": 1,
-            "ziegelstein": 5,
+            "ziegelstein": 8,
+            "spinnwebe": 5,
             "kleeblatt": 3,
-            "sternenstaub": 1
+            "sternenstaub": 2
         },
         "komet spitzhacke": {
             "stern spitzhacke": 1,
             "ziegelstein": 15,
+            "spinnwebe": 12,
             "kleeblatt": 8,
             "sternenstaub": 5,
             "edelstein": 3,
@@ -37,6 +45,7 @@
         "neutron spitzhacke": {
             "komet spitzhacke": 1,
             "ziegelstein": 25,
+            "spinnwebe": 20,
             "kleeblatt": 15,
             "sternenstaub": 5,
             "edelstein": 3,
@@ -50,6 +59,7 @@
             "stern spitzhacke": 1,
             "pauls spitzhacke": 1,
             "ziegelstein": 50,
+            "spinnwebe": 35,
             "kleeblatt": 25,
             "sternenstaub": 15,
             "edelstein": 10,
@@ -63,12 +73,14 @@
     {
         "stern angel": {
             "zanas angel": 1,
+            "spinnwebe": 8,
             "ziegelstein": 5,
             "kleeblatt": 3,
             "sternenstaub": 1
         },
         "komet angel": {
             "stern angel": 1,
+            "spinnwebe": 20,
             "ziegelstein": 15,
             "kleeblatt": 8,
             "sternenstaub": 5,
@@ -77,6 +89,7 @@
         },
         "neutron angel": {
             "komet angel": 1,
+            "spinnwebe": 45,
             "ziegelstein": 25,
             "kleeblatt": 15,
             "sternenstaub": 5,
@@ -90,6 +103,7 @@
             "komet angel": 1,
             "stern angel": 1,
             "zanas angel": 1,
+            "spinnwebe": 65,
             "ziegelstein": 50,
             "kleeblatt": 25,
             "sternenstaub": 15,
@@ -98,6 +112,52 @@
             "juwel": 5,
             "infinity ingot": 3,
             "neutron ingot": 1
+        }
+    },
+    "schwerter":
+    {
+        "stern schwert": {
+            "kayambas schwert": 1,
+            "ziegelstein": 10,
+            "spinnwebe": 8,
+            "kleeblatt": 6,
+            "sternenstaub": 4,
+            "edelstein": 3
+        },
+        "komet schwert": {
+            "stern schwert": 1,
+            "ziegelstein": 23,
+            "spinnwebe": 20,
+            "kleeblatt": 16,
+            "sternenstaub": 10,
+            "edelstein": 6,
+            "komet": 4
+        },
+        "neutron schwert": {
+            "komet schwert": 1,
+            "ziegelstein": 30,
+            "spinnwebe": 27,
+            "kleeblatt": 23,
+            "sternenstaub": 14,
+            "edelstein": 7,
+            "komet": 5,
+            "juwel": 3,
+            "neutron ingot": 2
+        },
+        "infinity schwert": {
+            "neutron schwert": 1,
+            "komet schwert": 1,
+            "stern schwert": 1,
+            "kayambas schwert": 1,
+            "ziegelstein": 80,
+            "spinnwebe": 70,
+            "kleeblatt": 55,
+            "sternenstaub": 45,
+            "edelstein": 30,
+            "komet": 20,
+            "juwel": 12,
+            "infinity ingot": 5,
+            "neutron ingot": 3
         }
     }
 }
