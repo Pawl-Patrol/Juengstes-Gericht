@@ -144,6 +144,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 break
         else:
             await ctx.send(f"{ctx.author.mention} Du brauchst eine Spitzhacke, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
+            ctx.command.reset_cooldown(ctx)
             return
         items = list(self.con["items"].find())
         tools = list(self.con["tools"].find())
@@ -183,6 +184,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 break
         else:
             await ctx.send(f"{ctx.author.mention} Du brauchst eine Angel, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
+            ctx.command.reset_cooldown(ctx)
             return
         items = list(self.con["items"].find())
         tools = list(self.con["tools"].find())
