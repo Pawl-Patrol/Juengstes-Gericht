@@ -244,7 +244,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     try:
                         reaction, user = await ctx.bot.wait_for("reaction_add", check=check, timeout=60)
                     except asyncio.TimeoutError:
-                        await menu.delete()
+                        await menu.clear_reactions()
                         return
                     await menu.remove_reaction(reaction, user)
                     if str(reaction.emoji) == reactions[0] and page > 1:
