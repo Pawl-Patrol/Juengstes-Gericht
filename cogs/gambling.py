@@ -115,8 +115,8 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     desc += f"\n{r['double']} Karte ziehen & Einsatz verdoppeln"
                 cembed.description = desc
                 cembed.set_footer(text="Du hast 60 Sekunden Zeit")
-            cembed.add_field(name=f"Deine Karten ({player_total})", value=' '.join(player), inline=True)
-            cembed.add_field(name=f"Meine Karten ({comp_total})", value=f'{comp[0]} <:NONE:664113279806996508>',
+            cembed.add_field(name=f"{ctx.author.name} ({player_total})", value=' '.join(player), inline=True)
+            cembed.add_field(name=f"{ctx.bot.user.name} ({comp_total})", value=f'{comp[0]} <:NONE:664113279806996508>',
                              inline=True)
             return cembed
 
@@ -145,6 +145,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             except asyncio.TimeoutError:
                 await msg.edit(embed=discord.Embed(title=":black_joker: Blackjack", colour=discord.Colour(0x1),
                                                    description='Du hast nicht geantwortet und das Spiel ist vorbei!'))
+                await msg.clear_reactions()
                 return
             await msg.remove_reaction(reaction, user)
 
@@ -206,8 +207,9 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             embed.description = f'Du hast **{amount}** :dollar: gewonnen!'
             self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 2}})
 
-        embed.set_field_at(1, name=f"Meine Karten ({comp_total})", value=' '.join(comp), inline=True)
+        embed.set_field_at(1, name=f"{ctx.bot.user.name} ({comp_total})", value=' '.join(comp), inline=True)
         await msg.edit(embed=embed)
+        await msg.clear_reactions()
 
     @commands.command(aliases=["jp"])
     @commands.cooldown(1, 80, commands.BucketType.guild)
@@ -240,7 +242,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 key = str(message.author.id)
                 jackpot[key] = jackpot.get(key, 0) + bet
                 price += bet
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -bet}})
+                self.con["stats"].update({"_id": message.author.id}, {"$inc": {"balance": -bet}})
                 embed=discord.Embed(color=0xC8B115, title=f':moneybag: Jackpot ─ {price} Dollar', description='Benutze `ok join <Einsatz>`, um teilzunehmen\n')
                 embed.set_footer(text='60 seconds left')
                 for user, bet in sorted(jackpot.items(), key=lambda item: item[1], reverse=True):
