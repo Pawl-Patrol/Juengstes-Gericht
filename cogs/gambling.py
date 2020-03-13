@@ -250,7 +250,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 await message.delete()
                 await msg.edit(embed=embed)
         if price == 0:
-            ctx.send(embed=discord.Embed(color=0xC8B115, title=':moneybag: Jackpot ─ 0 Dollar', description='Jackpot wurde abgebrochen, da sich nicht genug Leute gefunden haben'))
+            await ctx.send(embed=discord.Embed(color=0xC8B115, title=':moneybag: Jackpot ─ 0 Dollar', description='Jackpot wurde abgebrochen, da sich nicht genug Leute gefunden haben'))
         else:
             randint = random.randint(1, price)
             for user, bet in sorted(jackpot.items(), key=lambda item: item[1]):
