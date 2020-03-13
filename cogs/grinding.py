@@ -213,7 +213,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.group(case_insensitive=True)
     @commands_only()
     @has_pet()
-    @commands.cooldown(1, 2, commands.BucketType.user)
     async def pet(self, ctx):
         """Zeigt dir Informationen über dein Pet"""
         if ctx.invoked_subcommand is None:
@@ -261,7 +260,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Bitte gib eine gültige URL an.")
 
     @pet.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
     async def feed(self, ctx):
         """Füttert dein Pet"""
         result = await pet_action(ctx, "hunger")
@@ -281,7 +279,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Bitte warte noch, bevor du dein Pet waschen kannst.")
 
     @pet.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
     async def play(self, ctx):
         """Spiele mit deinem Pet"""
         result = await pet_action(ctx, "fun", cost=False)
@@ -291,7 +288,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Bitte warte noch, bevor du mit deinem Pet spielen kannst.")
 
     @pet.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
     async def train(self, ctx):
         """Trainiere dein Pet"""
         result = await pet_action(ctx, "energy", cost=False)
