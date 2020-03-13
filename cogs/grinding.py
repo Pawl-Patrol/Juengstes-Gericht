@@ -45,15 +45,11 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     for ingredient in copy:
                         if ingredient in tools:
                             ingredients.pop(ingredient)
-                    lines, remainer = divmod(len(ingredients), 5)
-                    if remainer != 0:
-                        lines += 1
-                    recipe = ""
-                    for i in range(lines):
-                        ing = []
-                        for ingredient, count in list(ingredients.items())[i * 5:i * 5 + 5]:
-                            ing.append(f"{count}x {emojis[ingredient]}")
-                        recipe += "\n> " + " ".join(ing)
+                    recipe = ''
+                    ing = []
+                    for ingredient, count in ingredients.items():
+                        ing.append(f"{count}x {emojis[ingredient]}")
+                    recipe += "\n> " + " ".join(ing)
                     embed.description += f"\n**» {emojis[crafting_item]} __{crafting_item.title()}__**:{recipe}"
                 return embed
 
