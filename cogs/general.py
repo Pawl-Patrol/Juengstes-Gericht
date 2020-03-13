@@ -312,9 +312,9 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 description = ""
                 if result3 or result4:
                     item = result3 or result4
-                    description += f"\n**Bruch-Wahrscheinlichkeit**: {item['break'] * 100}%\n**Geld-Drops**: {item['cash']} Dollar\n**Item-Drops**: {item['items']} Items\n\n:bar_chart: **Item-Drop-Wahrscheinlichkeiten**:"
+                    description += f"\n**Bruch-Wahrscheinlichkeit**: {int(item['break'] * 100)}%\n**Geld-Drops**: {item['cash']} Dollar\n**Item-Drops**: {item['items']} Items\n\n:bar_chart: **Item-Drop-Wahrscheinlichkeiten**:"
                     for drop, prop in reversed(list(item["props"].items())):
-                        description += f"\n> {int(prop*100)}% > {emojis[drop]} **{drop.title()}**"
+                        description += f"\n> {int(prop*100)}% {emojis[drop]} **{drop.title()}**"
             embed.description = f"**Beschreibung**: {result['description']}\n**Emoji**: {result['emoji']}\n**Verkaufspreis**: {result['sell']} Dollar" + description
             await ctx.send(embed=embed)
 
