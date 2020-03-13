@@ -150,25 +150,22 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         tools = list(self.con["tools"].find())
         emojis = {item["_id"]: item["emoji"] for item in items + tools}
         tool = self.con["mine-drops"].find_one({"_id": pickaxe})
-        cash = tool["cash"].split("-")
-        cash = random.randint(int(cash[0]), int(cash[1]))
         drops = tool["items"].split("-")
         drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
             color = discord.Color.green(),
             title=f"{emojis[pickaxe]} ***Du hast ein paar Items abgebaut!*** ({pickaxe.title()})",
-            description=f"> +{cash} **Dollar** :dollar:"
+            description=f"> "
         )
         rewards = numpy.random.choice(list(tool["props"].keys()), drops, p=list(tool["props"].values()))
         loot = {}
         for reward in rewards:
             loot[reward] = loot.get(reward, 0) + 1
         for item, count in loot.items():
-            embed.description += f"\n> {count}x **{item.title()}** {emojis[item]}"
+            embed.description += f"{count}x {emojis[item]} "
         if random.random() < tool["break"]:
             embed.description += f"\n:worried: **Beim Abbauen ist deine Spitzhacke kaputt gegangen!** ({int(tool['break']*100)}% Chance)"
             remove_item(ctx.author, pickaxe, 1)
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
         self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
         await ctx.send(embed=embed)
 
@@ -190,25 +187,22 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         tools = list(self.con["tools"].find())
         emojis = {item["_id"]: item["emoji"] for item in items + tools}
         tool = self.con["fish-drops"].find_one({"_id": fishing_rod})
-        cash = tool["cash"].split("-")
-        cash = random.randint(int(cash[0]), int(cash[1]))
         drops = tool["items"].split("-")
         drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
             color = discord.Color.green(),
             title=f"{emojis[fishing_rod]} ***Du hast nach Items gefischt!*** ({fishing_rod.title()})",
-            description=f"> +{cash} **Dollar** :dollar:"
+            description=f"> "
         )
         rewards = numpy.random.choice(list(tool["props"].keys()), drops, p=list(tool["props"].values()))
         loot = {}
         for reward in rewards:
             loot[reward] = loot.get(reward, 0) + 1
         for item, count in loot.items():
-            embed.description += f"\n> {count}x **{item.title()}** {emojis[item]}"
+            embed.description += f"{count}x {emojis[item]} "
         if random.random() < tool["break"]:
             embed.description += f"\n:worried: **Beim Abbauen ist deine Angel kaputt gegangen!** ({int(tool['break']*100)}% Chance)"
             remove_item(ctx.author, fishing_rod, 1)
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": cash}})
         self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
         await ctx.send(embed=embed)
 
