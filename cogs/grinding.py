@@ -103,7 +103,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         unset[ingredient] = 1
                     else:
                         missing = True
-                    embed.description += f"\n> **{inv_count}/{count}** {ingredient} {emojis[ingredient]}"
+                    embed.description += f"\n> **{inv_count}/{count}** {ingredient.title()} {emojis[ingredient]}"
                 if missing:
                     embed.color = discord.Color.red()
                     await ctx.send(embed=embed)
