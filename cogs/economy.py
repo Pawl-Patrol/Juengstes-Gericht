@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands, timers
 from main import connection
 from utils.checks import commands_or_casino_only, owner_only
-from utils.converters import is_item
 import asyncio
 
 
