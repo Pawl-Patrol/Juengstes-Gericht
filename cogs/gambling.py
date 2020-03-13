@@ -1,266 +1,336 @@
 import discord
-from discord.ext import commands
+from discord.ext import commands, timers
 from main import connection
-from utils.checks import casino_only
-from utils.converters import bet
-import json
-import random
+from utils.checks import commands_or_casino_only, owner_only
 import asyncio
-import math
 
 
-class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
+def remove_item(user, item, amount):
+    inv = connection["inventory"].find_one(
+        {"_id": user.id})
+    if inv[item] == amount:
+        connection["inventory"].update({"_id": user.id}, {"$unset": {item: 1}})
+    else:
+        connection["inventory"].update({"_id": user.id}, {"$inc": {item: -amount}})
+
+
+class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     def __init__(self, bot):
-        self.emoji = ":game_die:"
+        self.emoji = ":money_with_wings:"
         self.bot = bot
         self.con = connection
-        with open("data/gambling.json", "r") as f:
-            self.gambling = json.load(f)
-        self.slots_emojis = self.gambling["slots_emojis"]
-        self.blackjack_cards = self.gambling["blackjack_cards"]
-        self.blackjack_reactions = self.gambling["blackjack_reactions"]
+        self.timer_manager = timers.TimerManager(bot)
 
-    # noinspection PyTypeChecker,PyUnresolvedReferences,PyDunderSlots
-    @commands.command(usage='slots <bet>', aliases=['slot'])
-    @commands.cooldown(1, 7, commands.BucketType.user)
-    @casino_only()
-    async def slots(self, ctx, amount: bet):
-        """Bentuzt die Slotmaschine"""
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
-        choices = [':bell:', ':game_die:', ':four_leaf_clover:', ':gem:']
-        emojis = self.slots_emojis.copy()
-        random.shuffle(emojis)
+    @commands.command(usage="shop [page]", aliases=['market', 'store'])
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands_or_casino_only()
+    async def shop(self, ctx, page: int = 1):
+        """Zeigt den Shop"""
 
-        def slots_embed():
-            field = emojis[0] + ' | ' + emojis[1] + ' | ' + emojis[2] + '\n' + emojis[3] + ' | ' + emojis[
-                4] + ' | ' + \
-                    emojis[5] + '\n' + emojis[6] + ' | ' + emojis[7] + ' | ' + emojis[8]
-            cembed = discord.Embed(
-                color=discord.Color.blurple(),
-                description=f'─:slot_machine: **| Slots**─\n{field}\n─:slot_machine: **| Slots**─'
-            )
-            return cembed
-
-        msg = await ctx.send(embed=slots_embed())
-        for i in range(3):
-            await asyncio.sleep(1.5)
-            emojis[i] = random.choice(choices)
-            emojis[i + 3] = random.choice(choices)
-            emojis[i + 6] = random.choice(choices)
-            await msg.edit(embed=slots_embed())
-        profit = 0
-        if emojis[0] == emojis[1] and emojis[0] == emojis[2]:
-            profit += amount * 2
-        if emojis[3] == emojis[4] and emojis[3] == emojis[5]:
-            profit += amount * 2
-        if emojis[6] == emojis[7] and emojis[6] == emojis[8]:
-            profit += amount * 2
-        if emojis[0] == emojis[3] and emojis[0] == emojis[6]:
-            profit += amount * 2
-        if emojis[1] == emojis[4] and emojis[1] == emojis[7]:
-            profit += amount * 2
-        if emojis[2] == emojis[5] and emojis[2] == emojis[8]:
-            profit += amount * 2
-        if emojis[0] == emojis[4] and emojis[0] == emojis[8]:
-            profit += amount * 2
-        if emojis[6] == emojis[4] and emojis[6] == emojis[2]:
-            profit += amount * 2
-        embed = slots_embed()
-        v = '+' if profit != 0 else ''
-        embed.description = embed.description + f'\n**{v}{profit - amount}** :dollar:'
-        if profit != 0:
-            embed.color = discord.Color.green()
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": profit}})
+        shop = list(self.con["items"].find()) + list(self.con["tools"].find({"buy": {"$gt": 0}}))
+        shop_items = []
+        for item in shop:
+            if item["buy"]:
+                shop_items.append(item)
+        shop_items.sort(key=lambda i: i["buy"])
+        pages, b = divmod(len(shop_items), 5)
+        if b != 0:
+            pages += 1
+        if page > pages or page < 1:
+            await ctx.send(f'Seite nicht gefunden. Verfügbare Seiten: `{pages}`')
         else:
-            embed.color = discord.Color.red()
-        await msg.edit(embed=embed)
+            def create_embed(page):
+                embed = discord.Embed(color=0x983233, title=':convenience_store: Shop', description=f'Kaufe ein Item mit `{ctx.prefix}buy <item> [amount]`')
+                embed.set_footer(text=f"Seite {page} von {pages}")
+                for item in shop_items[(page - 1) * 5:(page - 1) * 5 + 5]:
+                    embed.description += f"\n\n**{item['emoji']} {item['_id'].title()}: :inbox_tray: ${item['buy']} | :outbox_tray: ${item['sell']}**\n➼ {item['description']}"
+                return embed
 
-    @commands.command(usage='blackjack <bet>', aliases=['bj'])
-    @commands.cooldown(1, 10, commands.BucketType.user)
-    @casino_only()
-    async def blackjack(self, ctx, amount: bet):
-        """Spiele Blackjack gegen den Bot"""
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
-        double = True if bal - amount >= 0 else False
-        player = []
-        comp = []
+            menu = await ctx.send(embed=create_embed(page))
+            if pages > 1:
+                reactions = ['◀', '▶']
+                for reaction in reactions:
+                    await menu.add_reaction(reaction)
 
-        def new(deck):
-            card = random.choice(list(self.blackjack_cards))
-            deck.append(card)
+                def check(r, u):
+                    return r.message.id == menu.id and u == ctx.author and str(r.emoji) in reactions
 
-        def total(deck):
-            hand = []
-            for card in deck:
-                hand.append(self.blackjack_cards[card])
-            value = sum(hand)
-            aces = hand.count(11)
-            if value > 21 and aces > 0:
-                while aces > 0 and value > 21:
-                    value -= 10
-                    aces -= 1
-            return value
+                while True:
+                    try:
+                        reaction, user = await ctx.bot.wait_for("reaction_add", check=check, timeout=60)
+                    except asyncio.TimeoutError:
+                        await menu.clear_reactions()
+                        return
+                    await menu.remove_reaction(reaction, user)
+                    if str(reaction.emoji) == reactions[0] and page > 1:
+                        page -= 1
+                        await menu.edit(embed=create_embed(page))
+                    elif str(reaction.emoji) == reactions[1] and page < pages:
+                        page += 1
+                        await menu.edit(embed=create_embed(page))
 
-        def show():
-            cembed = discord.Embed(
-                color=0x1,
-                title=':black_joker: Blackjack'
-            )
-            r = self.blackjack_reactions
-            if playing:
-                desc = f":dollar: Bet: **{amount}**\n{r['hit']} Karte ziehen\n{r['stand']} Meine Karten aufdecken\n{r['fold']} Aufgeben und die Hälfte zurückerhalten"
-                if double:
-                    desc += f"\n{r['double']} Karte ziehen & Einsatz verdoppeln"
-                cembed.description = desc
-                cembed.set_footer(text="Du hast 60 Sekunden Zeit")
-            cembed.add_field(name=f"{ctx.author.name} ({player_total})", value=' '.join(player), inline=True)
-            cembed.add_field(name=f"{ctx.bot.user.name} ({comp_total})", value=f'{comp[0]} <:NONE:664113279806996508>',
-                             inline=True)
-            return cembed
+    @commands.command(usage='buy item=amount')
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands_or_casino_only()
+    async def buy(self, ctx, *, args: str):
+        """Kauft ein Item"""
+        args = args.split("=")
+        if len(args) == 1:
+            args.append(1)
+        elif len(args) != 2:
+            await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal kaufen möchtest, benutze `{ctx.prefix}buy item=3`")
+            return
+        arg = args[0]
+        amount = int(args[1])
+        item = self.con["items"].find_one({"_id": arg, "buy": {"$gt": 0}})
+        if not item:
+            item = self.con["tools"].find_one({"_id": arg, "buy": {"$gt": 0}})
+        if item:
+            bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
+            if bal < item["buy"] * amount:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Du hast nicht genügend Geld",
+                    description=f"Du brauchst mindestens **{item['buy'] * amount}** :dollar:"
+                ))
+            else:
+                self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
+                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -(item["buy"] * amount)}})
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.green(),
+                    title="Transaktion erfolgreich",
+                    description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{item['buy'] * amount}** :dollar: gekauft"
+                ))
+        else:
+            await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden oder es ist nicht käuflich.")
 
-        new(player)
-        new(player)
-        new(comp)
-        new(comp)
-        player_total = total(player)
-        comp_total = f"{self.blackjack_cards[comp[0]]} + ?"
+    @commands.command(usage='sell item=amount')
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands_or_casino_only()
+    async def sell(self, ctx, *, args: str):
+        """Verkauft ein Item"""
+        if args.lower() == "all":
+            inv = self.con["inventory"].find_one({"_id": ctx.author.id})
+            if not inv:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Verkaufen nicht möglich",
+                    description=f"Du hast nicht genügend Items"
+                ))
+            else:
+                msg = await ctx.send(f"{ctx.author.mention} Möchtest du wirklich **alle deine Items** verkaufen? (ja/nein)")
+                try:
+                    message = await ctx.bot.wait_for("message", check=lambda m: m.content.lower() in ["j", "ja", "y", "yes", "n", "nein", "no"] and m.author == ctx.author, timeout=30)
+                except asyncio.TimeoutError:
+                    await msg.edit(content="*Aktion abgebrochen*")
+                    return
+                if message.content.lower() in ["n", "nein", "no"]:
+                    await msg.edit(content="*Aktion abgebrochen*")
+                    return
+                prices = {i["_id"]: i["sell"] for i in list(self.con["items"].find()) + list(self.con["tools"].find())}
+                post = {}
+                bal = 0
+                i = 0
+                a = False
+                for item, count in inv.items():
+                    if item != "_id":
+                        post[item] = 1
+                        i += count
+                        bal += count * prices[item]
+                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": bal}})
+                self.con["inventory"].delete_one({"_id": ctx.author.id})
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.green(),
+                    title="Transaktion erfolgreich",
+                    description=f"Du hast **{i}** Items für **{bal}** :dollar: verkauft"
+                ))
+        else:
+            args = args.split("=")
+            if len(args) == 1:
+                args.append(1)
+            elif len(args) != 2:
+                await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal verkaufen möchtest, benutze `{ctx.prefix}sell item=3`")
+                return
+            arg = args[0]
+            amount = int(args[1])
+            item = self.con["items"].find_one({"_id": arg})
+            if not item:
+                item = self.con["tools"].find_one({"_id": arg})
+            if item:
+                count = self.con["inventory"].find_one(
+                    {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
+                if not count:
+                    await ctx.send(embed=discord.Embed(
+                        color=discord.Color.red(),
+                        title="Verkaufen nicht möglich",
+                        description=f"Du hast nicht genügend Items"
+                    ))
+                else:
+                    sell = item['sell'] * amount
+                    self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": sell}})
+                    remove_item(ctx.author, item["_id"], amount)
+                    await ctx.send(embed=discord.Embed(
+                        color=discord.Color.green(),
+                        title="Transaktion erfolgreich",
+                        description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{sell}** :dollar: verkauft"
+                    ))
+            else:
+                await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
 
-        playing = True
-        msg = None
-        if player_total == 21:
-            playing = False
-            msg = await ctx.send(discord.Embed(
-                title=":black_joker: Blackjack"
+    @commands.command(usage="inventory [page]", aliases=["inv"])
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands_or_casino_only()
+    async def inventory(self, ctx, user: discord.User = None):
+        """Zeigt dein Inventar"""
+        if user is None:
+            user = ctx.author
+        results = self.con["inventory"].find_one({"_id": user.id})
+        if not results:
+            await ctx.send(embed=discord.Embed(
+                color=discord.Color.red(),
+                title=f":file_folder: {user.name}'s Inventar",
+                description="Keine Items gefunden"
             ))
         else:
-            msg = await ctx.send(embed=show())
-            for reaction in self.blackjack_reactions:
-                await msg.add_reaction(self.blackjack_reactions[reaction])
-
-        while playing:
-
-            try:
-                reaction, user = await ctx.bot.wait_for("reaction_add", check=lambda r, u: r.message.id == msg.id and u.id == ctx.author.id,
-                                                        timeout=60)
-            except asyncio.TimeoutError:
-                await msg.edit(embed=discord.Embed(title=":black_joker: Blackjack", colour=discord.Colour(0x1),
-                                                   description='Du hast nicht geantwortet und das Spiel ist vorbei!'))
-                await msg.clear_reactions()
-                return
-            await msg.remove_reaction(reaction, user)
-
-            if str(reaction.emoji) == self.blackjack_reactions['hit']:
-                new(player)
-                double = False
-                await msg.remove_reaction(self.blackjack_reactions['double'], ctx.bot.user)
-
-            elif str(reaction.emoji) == self.blackjack_reactions['stand']:
-                playing = False
-
-            elif str(reaction.emoji) == self.blackjack_reactions['double'] and double:
-                new(player)
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
-                amount = amount * 2
-                playing = False
-
-            elif str(reaction.emoji) == self.blackjack_reactions['fold']:
-                playing = False
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": math.floor(amount / 2)}})
-                embed = show()
-                embed.description = 'Du hast aufgegeben!'
-                await msg.edit(embed=embed)
-                return
-
-            player_total = total(player)
-            if player_total > 20:
-                playing = False
-            if playing:
-                await msg.edit(embed=show())
-
-        while total(comp) < 18:
-            new(comp)
-        comp_total = total(comp)
-
-        embed = show()
-
-        if player_total == 21 and comp_total != 21:
-            embed.description = f'Blackjack! Du hast **{round(amount * 1.5)}** :dollar: gewonnen!'
-            await msg.edit(embed=embed)
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": round(amount * 2.5)}})
-            return
-
-        elif player_total > 21:
-            embed.description = f'Du hast **{amount}** :dollar: verloren!'
-
-        elif comp_total > 21:
-            embed.description = f'Du hast **{amount}** :dollar: gewonnen!'
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 2}})
-
-        elif player_total < comp_total:
-            embed.description = f'Du hast **{amount}** :dollar: verloren!'
-
-        elif player_total == comp_total:
-            embed.description = 'Unentschieden!'
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount}})
-
-        else:
-            embed.description = f'Du hast **{amount}** :dollar: gewonnen!'
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 2}})
-
-        embed.set_field_at(1, name=f"{ctx.bot.user.name} ({comp_total})", value=' '.join(comp), inline=True)
-        await msg.edit(embed=embed)
-        await msg.clear_reactions()
-
-    @commands.command(aliases=["jp"])
-    @commands.cooldown(1, 80, commands.BucketType.guild)
-    async def jackpot(self, ctx):
-        """Startet einen Jackpot"""
-        embed = discord.Embed(color=0xC8B115, title=':moneybag: Jackpot ─ 0 Dollar', description='Benutze `ok join <Einsatz>`, um teilzunehmen')
-        embed.set_footer(text='60 Sekunden übrig')
-        msg = await ctx.send(embed=embed)
-        price = 0
-        jackpot = {}
-        def sortsec(val):
-            return val[1]
-        while True:
-            try:
-                message = await self.bot.wait_for('message', check=lambda message: message.content.lower().startswith('ok join') and message.guild.id == ctx.guild.id,  timeout=30)
-            except asyncio.TimeoutError:
-                break
-            content = message.content.lower().replace('ok join ', '')
-            if not content.isdigit() and not content in ['all', 'max']:
-                await ctx.send(f'{message.author.mention} Nutze: `ok join [Einsatz]`')
-            else:
-                bal = self.con["stats"].find_one({"_id": message.author.id}, {"balance": 1})["balance"]
-                if content in ['max', 'all']:
-                    bet = bal
-                elif int(content) > bal:
-                    await ctx.send(f'{message.author.mention} Du hast nicht genügend Bargeld :(')
+            items = {i["_id"]: i for i in list(self.con["items"].find())}
+            tools = {i["_id"]: i for i in list(self.con["tools"].find())}
+            value = 0
+            for entry in results:
+                if entry == "_id":
                     continue
+                if entry in tools:
+                    sell = tools[entry]["sell"]
                 else:
-                    bet = int(content)
-                key = str(message.author.id)
-                jackpot[key] = jackpot.get(key, 0) + bet
-                price += bet
-                self.con["stats"].update({"_id": message.author.id}, {"$inc": {"balance": -bet}})
-                embed=discord.Embed(color=0xC8B115, title=f':moneybag: Jackpot ─ {price} Dollar', description='Benutze `ok join <Einsatz>`, um teilzunehmen\n')
-                embed.set_footer(text='60 seconds left')
-                for user, bet in sorted(jackpot.items(), key=lambda item: item[1], reverse=True):
-                    embed.description += f"\n<@{user}> ─ **{round((bet/price)*100)}%** ({bet} Dollar)"
-                await message.delete()
-                await msg.edit(embed=embed)
-        if price == 0:
-            await ctx.send(embed=discord.Embed(color=0xC8B115, title=':moneybag: Jackpot ─ 0 Dollar', description='Jackpot wurde abgebrochen, da sich nicht genug Leute gefunden haben'))
+                    sell = items[entry]["sell"]
+                value += sell * results[entry]
+            page = 1
+            pages, b = divmod(len(results) - 1, 10)
+            if b != 0:
+                pages += 1
+
+            def create_embed(p):
+                embed = discord.Embed(color=0x983233,
+                                      title=f":open_file_folder: {user.name}'s Inventar ({p}/{pages})",
+                                      description="")
+                for i, item in enumerate(results):
+                    if item == "_id":
+                        continue
+                    elif i < (page - 1) * 10 + 1:
+                        continue
+                    elif i > (page - 1) * 10 + 10:
+                        continue
+                    elif results[item] == 0:
+                        continue
+                    else:
+                        if item in tools:
+                            emoji = tools[item]['emoji']
+                        else:
+                            emoji = items[item]['emoji']
+                        embed.description += f"\n> **{results[item]}x {item.title()} {emoji}**"
+                embed.set_footer(text=f"➼ Gesamtwert: {value}")
+                return embed
+
+            menu = await ctx.send(embed=create_embed(page))
+            if pages > 1:
+                reactions = ['◀', '▶']
+                for reaction in reactions:
+                    await menu.add_reaction(reaction)
+
+                def check(r, u):
+                    return r.message.id == menu.id and u == ctx.author and str(r.emoji) in reactions
+
+                while True:
+                    try:
+                        reaction, user = await ctx.bot.wait_for("reaction_add", check=check, timeout=60)
+                    except asyncio.TimeoutError:
+                        await menu.clear_reactions()
+                        return
+                    await menu.remove_reaction(reaction, user)
+                    if str(reaction.emoji) == reactions[0] and page > 1:
+                        page -= 1
+                        await menu.edit(embed=create_embed(page))
+                    elif str(reaction.emoji) == reactions[1] and page < pages:
+                        page += 1
+                        await menu.edit(embed=create_embed(page))
+
+    @commands.command(usage="additem <Item> <Emoji> <Preis> <Verkaufspreis> <Beschreibung>")
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @owner_only()
+    async def additem(self, ctx, item: str, emoji: str, buy: int, sell: int, *, description: str):
+        """Fügt ein Item hinzu"""
+        post = {
+            "emoji": emoji,
+            "buy": buy,
+            "sell": sell,
+            "description": description
+        }
+        self.con["items"].update({"_id": item.lower()}, post, upsert=True)
+        await ctx.send(embed=discord.Embed(
+            color=discord.Color.green(),
+            title="Item hinzugefügt",
+            description=f"Name: **{item.title()}**\nEmoji: {emoji}\nPreis: **{buy}**\nVerkaufspreis: **{sell}**\nBeschreibung: {description}"
+        ))
+
+    @commands.command(usage="addtool <Name> <Emoji> <Verkaufspreis> <Beschreibung>")
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @owner_only()
+    async def addtool(self, ctx, item: str, emoji: str, sell: int, *, description: str):
+        """Fügt ein Item hinzu"""
+        post = {
+            "emoji": emoji,
+            "sell": sell,
+            "description": description
+        }
+        self.con["tools"].update({"_id": item.lower()}, post, upsert=True)
+        await ctx.send(embed=discord.Embed(
+            color=discord.Color.green(),
+            title="Tool hinzugefügt",
+            description=f"Name: **{item.title()}**\nEmoji: {emoji}\nVerkaufspreis: **{sell}**\nBeschreibung: {description}"
+        ))
+
+    @commands.command(usage="delitem <item>")
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @owner_only()
+    async def delitem(self, ctx, item):
+        """Entfernt ein Item"""
+        self.con["items"].delete_one({"_id": item["_id"]})
+        await ctx.send(embed=discord.Embed(
+            color=discord.Color.green(),
+            title="Item entfernt",
+            description=f"Das Item **{item['_id'].title()}** wurde entfernt"
+        ))
+
+    @commands.command(usage="transferitem <user> item=amount", aliases=["giveitem"])
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    async def transferitem(self, ctx, user: discord.User, *, args: str):
+        args = args.split("=")
+        if len(args) == 1:
+            args.append(1)
+        elif len(args) != 2:
+            await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal vergeben möchtest, benutze `{ctx.prefix}transferitem item=3`")
+            return
+        arg = args[0]
+        amount = int(args[1])
+        item = self.con["items"].find_one({"_id": arg})
+        if not item:
+            item = self.con["tools"].find_one({"_id": arg})
+        if item:
+            count = self.con["inventory"].find_one(
+                {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
+            if not count:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Verkaufen nicht möglich",
+                    description=f"Du hast nicht genügend Items"
+                ))
+            else:
+                remove_item(ctx.author, item["_id"], amount)
+                self.con["inventory"].update({"_id": user.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
+                await ctx.send(f"{user.mention} Du hast {amount}x {item['_id'].title()} {item['emoji']} von **{ctx.author}** bekommen")
         else:
-            randint = random.randint(1, price)
-            for user, bet in sorted(jackpot.items(), key=lambda item: item[1]):
-                winner = user
-                if randint <= bet:
-                    break
-            await msg.edit(embed=discord.Embed(color=0xC8B115, title=':moneybag: Jackpot ─ GEWINNER', description=f'<@{winner}> hat den Jackpot geknackt! **+{price} :dollar:**'))
-            self.con["stats"].update({"_id": winner}, {"$inc": {"balance": price}})
+            await ctx.send(f"{user.mention} Ich konnte dieses Item nicht finden.")
+
 
 def setup(bot):
-    bot.add_cog(Gambling(bot))
+    bot.add_cog(Economy(bot))
