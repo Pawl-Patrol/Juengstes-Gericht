@@ -131,7 +131,9 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         msg = None
         if player_total == 21:
             playing = False
-            msg = await ctx.send(":tada:")
+            msg = await ctx.send(discord.Embed(
+                title=":black_joker: Blackjack"
+            ))
         else:
             msg = await ctx.send(embed=show())
             for reaction in self.blackjack_reactions:
@@ -184,9 +186,9 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         embed = show()
 
         if player_total == 21 and comp_total != 21:
-            embed.description = f'Du hast **{amount * 2}** :dollar: gewonnen!'
+            embed.description = f'Blackjack! Du hast **{round(amount * 1.5)}** :dollar: gewonnen!'
             await msg.edit(embed=embed)
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 3}})
+            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": round(amount * 2.5)}})
             return
 
         elif player_total > 21:
