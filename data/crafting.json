@@ -27,9 +27,9 @@
             "meteorit": 1
         },
         "komet": {
-            "kometstück": 35,
-            "energiestaub": 26,
-            "edelstein": 19,
+            "kometstück": 10,
+            "energiestaub": 8,
+            "edelstein": 7,
             "riesenpilz": 5,
             "juwel": 2,
             "perle": 1
