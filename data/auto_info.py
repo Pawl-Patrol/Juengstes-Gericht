@@ -4,7 +4,7 @@ auto_info = [
     discord.Embed(
         color=0xFF9AA2,
         title="Levelsystem",
-        description="**❥ ~ __Folgendes solltest du über das Levelsystem wissen__:**\n> ❧ ~ Du bekommst durch Schreiben und durch Aktivität im Voicechat jeweils zwischen 15 und 25 XP pro Minute\n> ❧ ~ Das heißt, dass du maximal 50 XP pro Minute bekommen kannst, bzw. 100 XP mit einem XP-Booster\n> ❧ ~ Aus deinen XP berechnet sich das Level, welches deine Levelrolle bestimmt\n> ❧ ~ Mit höheren Levelrollen, schaltest du höhere Berechtigungen frei. Mehr dazu findest du auf Seite 2\n**❥ ~ __Wichtige Commands__:**\n> ❧ ~ `ok rank` - Zeigt dein Level & deine XP\n> ❧ ~ `ok top` - Zeigt die Mitglieder mit den meisten XP\n> ❧ ~ `ok lvlroles` - Zeigt alle Levelrollen"
+        description="**❥ ~ __Folgendes solltest du über das Levelsystem wissen__:**\n> ❧ ~ Du bekommst durch Schreiben und durch Aktivität im Voicechat jeweils zwischen 15 und 25 XP pro Minute\n> ❧ ~ Das heißt, dass du maximal 50 XP pro Minute bekommen kannst, bzw. 75, wenn du deinen Multiplier mit `ok upgrade` gelevelt hast\n> ❧ ~ Aus deinen XP berechnet sich das Level, welches deine Levelrolle bestimmt\n> ❧ ~ Mit höheren Levelrollen, schaltest du höhere Berechtigungen frei. Mehr dazu findest du auf Seite 2\n**❥ ~ __Wichtige Commands__:**\n> ❧ ~ `ok rank` - Zeigt dein Level & deine XP\n> ❧ ~ `ok top` - Zeigt die Mitglieder mit den meisten XP\n> ❧ ~ `ok lvlroles` - Zeigt alle Levelrollen"
     ),
     discord.Embed(
         color=0xFFB7B2,
