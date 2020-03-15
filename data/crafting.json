@@ -30,7 +30,6 @@
             "kometstück": 10,
             "energiestaub": 8,
             "edelstein": 7,
-            "juwel": 2,
             "perle": 1
         },
         "perle": {
@@ -46,7 +45,6 @@
             "edelstein": 12,
             "perle": 3,
             "riesenpilz": 2,
-            "juwel": 1
         }
     },
     "Materialien":
@@ -57,7 +55,7 @@
             "edelstein": 6,
             "meteorit": 3,
             "stern": 2,
-            "perle": 1,
+            "riesenperle": 1,
             "komet": 1
         },
         "neutron ingot": {
