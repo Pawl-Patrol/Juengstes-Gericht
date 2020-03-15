@@ -19,7 +19,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         with open("data/crafting.json", "r", encoding="UTF-8") as f:
             self.recipes = json.load(f)
 
-    @commands.command(usage="craft <item>", aliases=["crafting"])
+    @commands.command(enabled=False, usage="craft <item>", aliases=["crafting"])
     @commands_only()
     async def craft(self, ctx, *, args: str = None):
         """Carfting-Commands"""
@@ -128,7 +128,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             else:
                 await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
 
-    @commands.command()
+    @commands.command(enabled=False)
     @commands.cooldown(1, 300, commands.BucketType.user)
     @commands_only()
     async def mine(self, ctx):
@@ -171,7 +171,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         embed.timestamp = datetime.datetime.utcnow()
         await ctx.send(embed=embed)
 
-    @commands.command()
+    @commands.command(enabled=False)
     @commands.cooldown(1, 300, commands.BucketType.user)
     @commands_only()
     async def fish(self, ctx):

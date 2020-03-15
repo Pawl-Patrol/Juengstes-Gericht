@@ -177,7 +177,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             else:
                 await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
 
-    @commands.command(usage="inventory [page]", aliases=["inv"])
+    @commands.command(enabled=False, usage="inventory [page]", aliases=["inv"])
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands_or_casino_only()
     async def inventory(self, ctx, user: discord.User = None):
