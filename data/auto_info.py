@@ -14,7 +14,7 @@ auto_info = [
     discord.Embed(
         color=0xFFDAC1,
         title="Economy & Gambling",
-        description="**❥ ~ __Wie bekommt man Geld__?**\n> ❧ ~ Wie XP bekommt man pro Minute abhängig von seinem Level Geld\n> ❧ ~ Weiterhin kannst du Geld durch `ok daily` & `ok timely` bekommen\n> ❧ ~ Mit `ok rob` kannst du andere Mitglieder ausrauben\n> ❧ ~ Die Top 10 reichsten Mitglieder findest du mit `ok rich`\n**❥ ~ __Was kann man mit dem Geld machen__?**\n> ❧ ~ Mit deinem Geld kannst du nützliche Items, wie XP-Booster kaufen\n> ❧ ~ Im Casino kannst du mit deinem Geld Blackjack oder Slots spielen\n> ❧ ~ Vorschläge für Items oder Glücksspiele kannst uns gerne geben"
+        description="**❥ ~ __Wie bekommt man Geld__?**\n> ❧ ~ Wie XP bekommt man pro Minute abhängig von seinem Level Geld\n> ❧ ~ Weiterhin kannst du Geld durch `ok daily`, `ok mine` & `ok fish` bekommen\n> ❧ ~ Mit `ok rob` kannst du andere Mitglieder ausrauben\n> ❧ ~ Die Top 10 reichsten Mitglieder findest du mit `ok rich`\n**❥ ~ __Was kann man mit dem Geld machen__?**\n> ❧ ~ Mit deinem Geld kannst du nützliche Items, wie XP-Booster kaufen\n> ❧ ~ Im Casino kannst du mit deinem Geld Blackjack oder Slots spielen\n> ❧ ~ Vorschläge für Items oder Glücksspiele kannst uns gerne geben"
     ),
     discord.Embed(
         color=0xE2F0CB,

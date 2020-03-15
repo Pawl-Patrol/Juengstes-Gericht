@@ -15,8 +15,8 @@ import asyncio
 con = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
 
 
-def prefix_callable(bot, msg):
-    user_id = bot.user.id
+def prefix_callable(client, msg):
+    user_id = client.user.id
     return [f'<@!{user_id}>', f'<@!{user_id}> ', f'<@{user_id}>', f'<@{user_id}> ', 'ok ']
 
 
@@ -168,7 +168,8 @@ class Bot(commands.Bot):
                 "total_xp": 100,
                 "balance": 50
             }})
-        await channel.send(f"{m.author.mention} Du hast das Wort erraten und **50** :dollar: & **100** XP bekommen!", delete_after=10)
+        await channel.send(f"{m.author.mention} Du hast das Wort erraten und **50** :dollar: & **100** XP bekommen!",
+                           delete_after=10)
         await asyncio.sleep(10)
         await m.delete()
 
@@ -379,7 +380,7 @@ class Bot(commands.Bot):
                 page += 1
             elif emoji == "⏭️" and self.auto_info_page != len(auto_info):
                 page = len(auto_info)
-            await message.edit(embed=auto_info[page-1].set_footer(text=f"Seite {page} von {len(auto_info)}"))
+            await message.edit(embed=auto_info[page - 1].set_footer(text=f"Seite {page} von {len(auto_info)}"))
             self.auto_info_page = page
         if message.id == self.config["support_message"]:
             await message.remove_reaction(payload.emoji, member)
@@ -397,7 +398,8 @@ class Bot(commands.Bot):
                     member: discord.PermissionOverwrite(read_messages=True),
                     serverteam: discord.PermissionOverwrite(read_messages=True)
                 }
-                support_channel = await guild.create_text_channel(name=f"Support #{self.support_count + 1}", overwrites=overwrites)
+                support_channel = await guild.create_text_channel(name=f"Support #{self.support_count + 1}",
+                                                                  overwrites=overwrites)
                 await support_channel.edit(topic=member.id)
                 embed = discord.Embed(
                     color=discord.Color.green(),
@@ -405,7 +407,8 @@ class Bot(commands.Bot):
                     description="In diesem Channel kannst nur du und das Serverteam schreiben. Sobald jemand bereit "
                                 "ist, wird er sich um dich kümmern."
                 )
-                embed.set_footer(text="Klicke auf das Kreuz, um den Raum wieder zu schließen", icon_url="https://2017.igem.org/wiki/images/7/7e/T--HZAU-China--arrow.gif")
+                embed.set_footer(text="Klicke auf das Kreuz, um den Raum wieder zu schließen",
+                                 icon_url="https://2017.igem.org/wiki/images/7/7e/T--HZAU-China--arrow.gif")
                 support_message = await support_channel.send(content=member.mention, embed=embed)
                 await support_message.add_reaction("❌")
                 self.support_count += 1
@@ -469,7 +472,8 @@ class Bot(commands.Bot):
         if before.channel == after.channel:
             return
         if before.channel:
-            if before.channel.category_id == self.config["avc_category"] and before.channel.id != self.config["avc_channel"] and len(before.channel.members) == 0:
+            if before.channel.category_id == self.config["avc_category"] and before.channel.id != self.config[
+                "avc_channel"] and len(before.channel.members) == 0:
                 await before.channel.delete()
         if after.channel:
             if after.channel.id == self.config["avc_channel"]:
@@ -503,7 +507,7 @@ class Bot(commands.Bot):
                     if role:
                         await role.delete()
 
-    async def onn_command_error(self, ctx, error):
+    async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.CheckFailure):
