@@ -30,7 +30,6 @@
             "kometstück": 10,
             "energiestaub": 8,
             "edelstein": 7,
-            "riesenpilz": 5,
             "juwel": 2,
             "perle": 1
         },
@@ -45,9 +44,9 @@
         "riesenperle": {
             "energiestaub": 16,
             "edelstein": 12,
-            "perle": 5,
-            "riesenpilz": 3,
-            "juwel": 2
+            "perle": 3,
+            "riesenpilz": 2,
+            "juwel": 1
         }
     },
     "Materialien":
