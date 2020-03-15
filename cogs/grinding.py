@@ -119,7 +119,8 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     if unset:
                         self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc, "$unset": unset}, upsert=True)
                     else:
-                        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc   }, upsert=True)
+                        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc}, upsert=True)
+                    await msg.clear_reactions()
                     await msg.edit(embed=discord.Embed(
                         color=discord.Color.green(),
                         title="Crafting erfolgreich!",
