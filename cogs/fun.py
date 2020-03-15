@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from utils.checks import min_lvl
 import asyncio
-from main import connection as con
+from main import con
 import urllib.parse as parse
 import upsidedown
 import random

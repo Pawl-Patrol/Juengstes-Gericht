@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from main import connection as con
+from main import con
 from utils.checks import commands_only, has_pet
 from utils.utils import convert_pet, lvlcalc
 from cogs.economy import remove_item
@@ -16,7 +16,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
         self.emoji = ":pick:"
         self.bot = bot
-        self.con = con
         with open("data/crafting.json", "r", encoding="UTF-8") as f:
             self.recipes = json.load(f)
 
@@ -24,9 +23,9 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands_only()
     async def craft(self, ctx, *, args: str = None):
         """Carfting-Commands"""
-        inv = self.con["inventory"].find_one({"_id": ctx.author.id})
-        items = self.con["items"].find()
-        tools = list(self.con["tools"].find())
+        inv = con["inventory"].find_one({"_id": ctx.author.id})
+        items = con["items"].find()
+        tools = list(con["tools"].find())
         emojis = {item["_id"]: item["emoji"] for item in list(items) + tools}
         tools = [t["_id"] for t in tools]
         if not args:
@@ -117,9 +116,9 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         return
                     inc[item.lower()] = amount
                     if unset:
-                        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc, "$unset": unset}, upsert=True)
+                        con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc, "$unset": unset}, upsert=True)
                     else:
-                        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc}, upsert=True)
+                        con["inventory"].update({"_id": ctx.author.id}, {"$inc": inc}, upsert=True)
                     await msg.clear_reactions()
                     await msg.edit(embed=discord.Embed(
                         color=discord.Color.green(),
@@ -135,7 +134,11 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def mine(self, ctx):
         """Baue Resourcen ab und bekomme Items"""
         pickaxes = ["infinity spitzhacke", "neutron spitzhacke", "komet spitzhacke", "stern spitzhacke", "pauls spitzhacke"]
-        inv = self.con["inventory"].find_one({"_id": ctx.author.id})
+        inv = con["inventory"].find_one({"_id": ctx.author.id})
+        if not inv:
+            await ctx.send(f"{ctx.author.mention} Du brauchst eine Spitzhacke, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
+            ctx.command.reset_cooldown(ctx)
+            return
         for pickaxe in pickaxes:
             if pickaxe in inv:
                 break
@@ -143,10 +146,10 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Du brauchst eine Spitzhacke, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
             ctx.command.reset_cooldown(ctx)
             return
-        items = list(self.con["items"].find())
-        tools = list(self.con["tools"].find())
+        items = list(con["items"].find())
+        tools = list(con["tools"].find())
         emojis = {item["_id"]: item["emoji"] for item in items + tools}
-        tool = self.con["mine-drops"].find_one({"_id": pickaxe})
+        tool = con["mine-drops"].find_one({"_id": pickaxe})
         drops = tool["items"].split("-")
         drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
@@ -163,7 +166,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             loot[reward] = loot.get(reward, 0) + 1
         for item, count in loot.items():
             embed.description += f"\n> **{count}x {item.title()}** {emojis[item]}"
-        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
+        con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
         embed.set_footer(text=f"mit {pickaxe.title()}")
         embed.timestamp = datetime.datetime.utcnow()
         await ctx.send(embed=embed)
@@ -174,7 +177,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def fish(self, ctx):
         """Fische nach Resourcen und bekomme Items"""
         fishing_rods = ["infinity angel", "neutron angel", "komet angel", "stern angel", "zanas angel"]
-        inv = self.con["inventory"].find_one({"_id": ctx.author.id})
+        inv = con["inventory"].find_one({"_id": ctx.author.id})
         for fishing_rod in fishing_rods:
             if fishing_rod in inv:
                 break
@@ -182,10 +185,10 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Du brauchst eine Angel, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`")
             ctx.command.reset_cooldown(ctx)
             return
-        items = list(self.con["items"].find())
-        tools = list(self.con["tools"].find())
+        items = list(con["items"].find())
+        tools = list(con["tools"].find())
         emojis = {item["_id"]: item["emoji"] for item in items + tools}
-        tool = self.con["fish-drops"].find_one({"_id": fishing_rod})
+        tool = con["fish-drops"].find_one({"_id": fishing_rod})
         drops = tool["items"].split("-")
         drops = random.randint(int(drops[0]), int(drops[1]))
         embed = discord.Embed(
@@ -202,7 +205,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             loot[reward] = loot.get(reward, 0) + 1
         for item, count in loot.items():
             embed.description += f"\n> **{count}x {item.title()}**   {emojis[item]}"
-        self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
+        con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
         embed.set_footer(text=f"mit {fishing_rod.title()}")
         embed.timestamp = datetime.datetime.utcnow()
         await ctx.send(embed=embed)
@@ -213,7 +216,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def pet(self, ctx):
         """Zeigt dir Informationen über dein Pet"""
         if ctx.invoked_subcommand is None:
-            pet = self.con["pets"].find_one({"_id": ctx.author.id})
+            pet = con["pets"].find_one({"_id": ctx.author.id})
             stats = convert_pet(pet)
             embed = discord.Embed(
                 color=discord.Color.greyple(),
@@ -238,7 +241,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         if len(name) > 25:
             await ctx.send(f"{ctx.author.mention} Der Name darf nicht länger als 25 Zeichen sein.")
         else:
-            self.con["pets"].update({"_id": ctx.author.id}, {"$set": {"name": name}})
+            con["pets"].update({"_id": ctx.author.id}, {"$set": {"name": name}})
             await ctx.send(f"{ctx.author.mention} Der Name wurde in **{name}** geändert.")
 
     @pet.command(usage="name <avatar>")
@@ -252,7 +255,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         embed.set_thumbnail(url=url)
         try:
             await ctx.send(embed=embed)
-            self.con["pets"].update({"_id": ctx.author.id}, {"$set": {"url": url}})
+            con["pets"].update({"_id": ctx.author.id}, {"$set": {"url": url}})
         except discord.HTTPException:
             await ctx.send(f"{ctx.author.mention} Bitte gib eine gültige URL an.")
 

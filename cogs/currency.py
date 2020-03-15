@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from main import connection
+from main import con
 from utils.checks import commands_or_casino_only, owner_only
 import pymongo
 import random
@@ -11,7 +11,6 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
         self.emoji = ":moneybag:"
         self.bot = bot
-        self.con = connection
 
     @commands.command(usage='balance [user]', aliases=['bal', 'bank', 'credits', 'money'])
     @commands.cooldown(1, 3, commands.BucketType.user)
@@ -20,7 +19,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         """Zeigt dir dein Geld oder das von einem anderen Nutzer"""
         if not user:
             user = ctx.author
-        stats = self.con["stats"].find_one({"_id": user.id}, {"balance": 1, "bank": 1, "max": 1})
+        stats = con["stats"].find_one({"_id": user.id}, {"balance": 1, "bank": 1, "max": 1})
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title=f'Bilanz von {user.display_name}',
@@ -32,7 +31,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands_or_casino_only()
     async def withdraw(self, ctx, amount):
         """Hebt Geld von deiner Bank ab"""
-        stats = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1, "bank": 1})
+        stats = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1, "bank": 1})
         if amount.isdigit():
             amount = int(amount)
         elif amount in ['max', 'all']:
@@ -49,7 +48,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         elif amount < 1:
             await ctx.send(f"{ctx.author.mention} Du musst mindestens 1 :dollar: von deiner Bank abheben")
         else:
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount, "bank": -amount}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount, "bank": -amount}})
             await ctx.send(embed=discord.Embed(
                 color=discord.Color.green(),
                 title='Transaktion erfolgreich',
@@ -61,7 +60,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands_or_casino_only()
     async def deposit(self, ctx, amount):
         """Zahlt Geld auf deine Bank ein"""
-        stats = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1, "bank": 1, "max": 1})
+        stats = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1, "bank": 1, "max": 1})
         if amount.isdigit():
             amount = int(amount)
         elif amount in ['max', 'all']:
@@ -84,7 +83,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         else:
             if amount + stats["bank"] > stats["max"]:
                 amount = stats["max"] - stats["bank"]
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount, "bank": amount}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount, "bank": amount}})
             await ctx.send(embed=discord.Embed(
                 color=discord.Color.green(),
                 title='Transaktion erfolgreich',
@@ -96,7 +95,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands_or_casino_only()
     async def rich(self, ctx):
         """Zeigt die 10 reichsten Member"""
-        results = self.con["stats"].find({}).sort("balance", pymongo.DESCENDING).limit(10)
+        results = con["stats"].find({}).sort("balance", pymongo.DESCENDING).limit(10)
         description = ''
         for i, user in enumerate(results):
             member = self.bot.get_user(user["_id"])
@@ -121,7 +120,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 description='Bots sind leider davon ausgeschlossen, aber trotzdem danke, dass du ihnen Geld geben wolltest :)'
             ))
             return
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
+        bal = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
         if amount.isdigit():
             amount = int(amount)
         elif amount in ['max', 'all']:
@@ -138,8 +137,8 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         elif amount < 1:
             await ctx.send(f"{ctx.author.mention} Du musst mindestens 1 :dollar: angeben")
         else:
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
-            self.con["stats"].update({"_id": user.id}, {"$inc": {"balance": amount}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
+            con["stats"].update({"_id": user.id}, {"$inc": {"balance": amount}})
             await ctx.send(f"Du hast {user.mention} **{amount}** :dollar: gegeben")
 
     @commands.command(usage='rob <user>', aliases=['steal'])
@@ -150,8 +149,8 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         if user.bot:
             await ctx.send("Du kannst keine Bots ausrauben")
             return
-        ybal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
-        ubal = self.con["stats"].find_one({"_id": user.id}, {"balance": 1})["balance"]
+        ybal = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
+        ubal = con["stats"].find_one({"_id": user.id}, {"balance": 1})["balance"]
         if ybal < 100:
             await ctx.send(f"{ctx.author.mention} Du brauchst mindestens 100 :dollar:, um jemanden ausrauben zu können")
         elif ubal < 200:
@@ -169,14 +168,14 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 elif chance < 20:
                     chance = 20
                 rob = int(ubal * chance / 100)
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": rob}})
-                self.con["stats"].update({"_id": user.id}, {"$inc": {"balance": -rob}})
+                con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": rob}})
+                con["stats"].update({"_id": user.id}, {"$inc": {"balance": -rob}})
                 await ctx.send(
                     f'Du konntest von {user.mention} **{rob}** :dollar: stehlen, ohne dass er es bemerkt hat.')
             else:
                 pay = random.randint(75, 100)
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -pay}})
-                self.con["stats"].update({"_id": user.id}, {"$inc": {"balance": pay}})
+                con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -pay}})
+                con["stats"].update({"_id": user.id}, {"$inc": {"balance": pay}})
                 await ctx.send(f'Du wurdest erwischt und musstest {user.mention} **{pay}** :dollar: Strafe zahlen!')
 
     @commands.command(aliases=["claim"])
@@ -185,7 +184,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def daily(self, ctx):
         """Hole dir deine tägliche Belohnung ab"""
         add = random.randint(250, 450)
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": add}})
+        con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": add}})
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title='Belohnung abgeholt',
@@ -197,7 +196,7 @@ class Currency(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @owner_only()
     async def set(self, ctx, user: discord.User, balance: int):
         """Ändert die Bilanz von einem Nutzer"""
-        self.con["stats"].update({"_id": user.id}, {"$set": {"balance": balance}})
+        con["stats"].update({"_id": user.id}, {"$set": {"balance": balance}})
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title="Erfolgreich",

@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from main import connection, lvlcalc
+from main import con, lvlcalc
 from utils.checks import commands_only
 import json
 from aiohttp import ClientSession
@@ -17,7 +17,6 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
         self.emoji = ":star2:"
         self.bot = bot
-        self.con = connection
         with open("data/config.json", "r") as f:
             self.config = json.load(f)
         self.session = ClientSession(loop=bot.loop)
@@ -48,7 +47,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send("Ich kann keine Ränge von Bots anzeigen")
             return
         async with ctx.typing():
-            stats = self.con["stats"].find_one({"_id": user.id})
+            stats = con["stats"].find_one({"_id": user.id})
             level, xp, cap = lvlcalc(stats["total_xp"])
             img = Image.open("data/media/rank_card.png")
             draw = ImageDraw.Draw(img)
@@ -81,7 +80,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands_only()
     async def leaderboard(self, ctx, page: int = 1):
         """Zeigt alle Member sortiert nach ihren XP"""
-        results = list(self.con["stats"].find({}).sort("total_xp", pymongo.DESCENDING))
+        results = list(con["stats"].find({}).sort("total_xp", pymongo.DESCENDING))
         pages, b = divmod(len(results), 10)
         if b:
             pages += 1
@@ -135,7 +134,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def leveledroles(self, ctx):
         """Commands für die Levelrollen"""
         if ctx.invoked_subcommand is None:
-            roles = list(self.con["lvlroles"].find({}).sort("level", pymongo.ASCENDING))
+            roles = list(con["lvlroles"].find({}).sort("level", pymongo.ASCENDING))
             if not roles:
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.red(),
@@ -165,7 +164,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         elif level < 1:
             await ctx.send(f"{ctx.author.mention} Das Level muss mindestens 1 sein")
         else:
-            self.con["lvlroles"].update({"_id": role.id}, {"$set": {"level": level}}, upsert=True)
+            con["lvlroles"].update({"_id": role.id}, {"$set": {"level": level}}, upsert=True)
             await ctx.send(f"Die Levelrolle {role.mention} ab Level **{level}** wurde eingefügt")
 
     @leveledroles.command(aliases=['delete', 'del'], usage='remove <role>')
@@ -173,11 +172,11 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.has_permissions(administrator=True)
     async def remove(self, ctx, *, role: discord.Role):
         """Entfernt eine Levelrolle"""
-        result = self.con["lvlroles"].find_one({"_id": role.id})
+        result = con["lvlroles"].find_one({"_id": role.id})
         if not result:
             await ctx.send(f"{ctx.author.mention} Ich konnte die Rolle nicht finden :/")
         else:
-            self.con["lvlroles"].delete_one({"_id": role.id})
+            con["lvlroles"].delete_one({"_id": role.id})
             await ctx.send(f"{ctx.author.mention} Die Levelrolle wurde erfolgreich entfernt")
 
     @leveledroles.command(aliases=['clean'])
@@ -185,7 +184,7 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.has_permissions(administrator=True)
     async def clear(self, ctx):
         """Entfernt alle Rollen"""
-        self.con["lvlroles"].delete_many({})
+        con["lvlroles"].delete_many({})
         await ctx.send(f"{ctx.author.mention} Alle Levelrollen wurden erfolgreich entfernt")
 
 

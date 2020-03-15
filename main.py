@@ -12,12 +12,12 @@ import random
 import math
 import asyncio
 
-connection = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
+con = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
 
 
 def prefix_callable(bot, msg):
     user_id = bot.user.id
-    return [f'<@!{user_id}> ', f'<@{user_id}> ', 'ok ']
+    return [f'<@!{user_id}>', f'<@!{user_id}> ', f'<@{user_id}>', f'<@{user_id}> ', 'ok ']
 
 
 class Bot(commands.Bot):
@@ -28,7 +28,6 @@ class Bot(commands.Bot):
                          case_insensitive=True,
                          owner_id=376100578683650048)
         self.token = os.environ.get("DISCORD_TOKEN")
-        self.con = connection
         self.timer_manager = timers.TimerManager(self)
         with open("data/reaction_roles.json", "r", encoding="utf8") as f:
             self.reaction_roles = json.load(f)
@@ -64,7 +63,7 @@ class Bot(commands.Bot):
                         if "Bump erfolgreich" in embed.description:
                             await message.channel.send(
                                 f"<@{self.last_bump}>, Vielen Dank für deinen Bump! Du hast **100** :dollar: und **250** XP bekommen")
-                            self.con["stats"].update_one({"_id": self.last_bump}, {
+                            con["stats"].update_one({"_id": self.last_bump}, {
                                 "$inc": {
                                     "message_xp": 250, "total_xp": 250, "balance": 100
                                 }})
@@ -76,8 +75,8 @@ class Bot(commands.Bot):
 
         await bot.process_commands(message)
         ctx = await self.get_context(message)
-        stats = self.con["stats"].find_one({"_id": ctx.author.id})
-        afk = self.con["afk"].find_one({"_id": ctx.author.id})
+        stats = con["stats"].find_one({"_id": ctx.author.id})
+        afk = con["afk"].find_one({"_id": ctx.author.id})
 
         if not stats:
             self.set_standard_stats(ctx.author)
@@ -127,7 +126,7 @@ class Bot(commands.Bot):
             if m.content == code:
                 await msg.delete()
                 break
-        self.con["stats"].update_one({"_id": m.author.id}, {
+        con["stats"].update_one({"_id": m.author.id}, {
             "$inc": {
                 "message_xp": 100,
                 "total_xp": 100,
@@ -163,7 +162,7 @@ class Bot(commands.Bot):
             if m.content.lower() == word.lower():
                 await msg.delete()
                 break
-        self.con["stats"].update_one({"_id": m.author.id}, {
+        con["stats"].update_one({"_id": m.author.id}, {
             "$inc": {
                 "message_xp": 100,
                 "total_xp": 100,
@@ -185,7 +184,7 @@ class Bot(commands.Bot):
             "max": 100,
             "message_cd": 0
         }
-        self.con["stats"].insert_one(stats)
+        con["stats"].insert_one(stats)
 
     def set_standard_upgrades(self, member):
         """Erstellt für den Member ein Profil für die Upgrades in der Datenbank"""
@@ -195,11 +194,11 @@ class Bot(commands.Bot):
             "money": 0,
             "crit": 0
         }
-        self.con["upgrades"].insert_one(upgrades)
+        con["upgrades"].insert_one(upgrades)
 
     async def add_xp(self, member, exp_type):
         """Gibt dem Member XP und Geld"""
-        u = self.con["upgrades"].find_one({"_id": member.id})
+        u = con["upgrades"].find_one({"_id": member.id})
         if not u:
             self.set_standard_upgrades(member)
         mult, money, crit = convert_upgrade_levels(u['multiplier'], u['money'], u['crit'])
@@ -210,7 +209,7 @@ class Bot(commands.Bot):
             inc_exp = inc_exp * 2
             inc_bal = inc_bal * 2
             inc_bank = inc_bank * 2
-        self.con["stats"].update_one({"_id": member.id}, {
+        con["stats"].update_one({"_id": member.id}, {
             "$set": {
                 "message_cd": int(time.time())
             },
@@ -225,7 +224,7 @@ class Bot(commands.Bot):
     async def add_lvlrole(self, guild, member, level):
         """Schaut, ob der Member seine Levelrolle hat. Nützlich, wenn Jemand dem Server neu gejoint ist"""
         lvl_role = list(
-            self.con["lvlroles"].find({"level": {"$lt": level + 1}}).sort("level", pymongo.DESCENDING).limit(1))
+            con["lvlroles"].find({"level": {"$lt": level + 1}}).sort("level", pymongo.DESCENDING).limit(1))
         if lvl_role:
             lvl_role = guild.get_role(lvl_role[0]["_id"])
             if lvl_role and lvl_role not in member.roles:
@@ -233,7 +232,7 @@ class Bot(commands.Bot):
 
     async def new_lvlrole(self, guild, member, channel, level):
         """Schaut beim einem Level-up, ob der Member eine neue Levelrolle erreicht hat"""
-        new_role = self.con["lvlroles"].find_one({"level": level + 1})
+        new_role = con["lvlroles"].find_one({"level": level + 1})
         if new_role:
             # Gibt die neue Rolle
             new_role = guild.get_role(new_role["_id"])
@@ -241,7 +240,7 @@ class Bot(commands.Bot):
 
             # Entfernt die alte Rolle
             old_role = list(
-                self.con["lvlroles"].find({"level": {"$lt": level + 1}}).sort("level", pymongo.DESCENDING).limit(
+                con["lvlroles"].find({"level": {"$lt": level + 1}}).sort("level", pymongo.DESCENDING).limit(
                     1))
             if old_role:
                 old_role = guild.get_role(old_role[0]["_id"])
@@ -255,7 +254,7 @@ class Bot(commands.Bot):
 
     async def remove_afk_message(self, member, channel):
         """Löscht die Afk-Nachricht des Members, wenn er wieder da ist"""
-        self.con["afk"].delete_one({"_id": member.id})
+        con["afk"].delete_one({"_id": member.id})
         await channel.send(embed=discord.Embed(
             color=discord.Color.blue(),
             title='Willkommen zurück',
@@ -264,7 +263,7 @@ class Bot(commands.Bot):
 
     async def check_afk(self, user, channel):
         """Schaut, ob der User AFK ist und sendet ggf. seine AFK-Nachricht"""
-        afk = self.con["afk"].find_one({"_id": user.id})
+        afk = con["afk"].find_one({"_id": user.id})
         if afk:
             embed = discord.Embed(
                 color=discord.Color.red(),
@@ -281,7 +280,7 @@ class Bot(commands.Bot):
                 for member in channel.members:
                     if member.bot or member.voice.afk:
                         continue
-                    stats = self.con["stats"].find_one({"_id": member.id})
+                    stats = con["stats"].find_one({"_id": member.id})
                     level, xp, cap = lvlcalc(stats["total_xp"])
                     added_xp = await self.add_xp(member, exp_type="voice_xp")
                     if xp + added_xp >= cap and level:
@@ -321,7 +320,7 @@ class Bot(commands.Bot):
                                             args=(member.guild, message))
 
         self.last_join = joined
-        stats = self.con["stats"].find_one({"_id": member.id})
+        stats = con["stats"].find_one({"_id": member.id})
         if not stats:
             self.set_standard_stats(member)
         embed = discord.Embed(
@@ -343,11 +342,11 @@ class Bot(commands.Bot):
         embed = discord.Embed(color=discord.Color.red())
         embed.set_author(name=f"{member} hat den Server verlassen", icon_url=member.avatar_url)
         await gate.send(embed=embed)
-        stats = self.con["stats"].find_one({"_id": member.id})
+        stats = con["stats"].find_one({"_id": member.id})
         if stats["total_xp"] < 1000:
-            self.con["stats"].delete_one({"_id": member.id})
-            self.con["upgrades"].delete_one({"_id": member.id})
-            self.con["inventory"].delete_one({"_id": member.id})
+            con["stats"].delete_one({"_id": member.id})
+            con["upgrades"].delete_one({"_id": member.id})
+            con["inventory"].delete_one({"_id": member.id})
 
     async def update_membercount(self, guild):
         channel = guild.get_channel(self.config["membercount_channel"])
@@ -490,7 +489,7 @@ class Bot(commands.Bot):
         if booster:
             if booster not in before.roles and booster in after.roles:
                 channel = before.guild.get_channel(self.config["booster_broadcast_channel"])
-                self.con["stats"].update_one({"_id": before.id}, {"$inc": {"balance": 10000}})
+                con["stats"].update_one({"_id": before.id}, {"$inc": {"balance": 10000}})
                 embed = discord.Embed(
                     color=0xf47fff,
                     title='Vielen Dank für deinen Boost!',
@@ -498,13 +497,13 @@ class Bot(commands.Bot):
                 )
                 await channel.send(content=before.mention, embed=embed)
             elif booster in before.roles and booster not in after.roles:
-                user = self.con["booster"].find_one({"_id": before.id})
+                user = con["booster"].find_one({"_id": before.id})
                 if user:
                     role = before.guild.get_role(user["role"])
                     if role:
                         await role.delete()
 
-    async def on_command_error(self, ctx, error):
+    async def onn_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.CheckFailure):

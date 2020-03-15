@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from main import connection
+from main import con
 from utils.checks import casino_only
 from utils.converters import bet
 import json
@@ -14,7 +14,6 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
         self.emoji = ":game_die:"
         self.bot = bot
-        self.con = connection
         with open("data/gambling.json", "r") as f:
             self.gambling = json.load(f)
         self.slots_emojis = self.gambling["slots_emojis"]
@@ -27,7 +26,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @casino_only()
     async def slots(self, ctx, amount: bet):
         """Bentuzt die Slotmaschine"""
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
+        con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
         choices = [':bell:', ':game_die:', ':four_leaf_clover:', ':gem:']
         emojis = self.slots_emojis.copy()
         random.shuffle(emojis)
@@ -71,7 +70,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         embed.description = embed.description + f'\n**{v}{profit - amount}** :dollar:'
         if profit != 0:
             embed.color = discord.Color.green()
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": profit}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": profit}})
         else:
             embed.color = discord.Color.red()
         await msg.edit(embed=embed)
@@ -81,8 +80,8 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @casino_only()
     async def blackjack(self, ctx, amount: bet):
         """Spiele Blackjack gegen den Bot"""
-        self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
-        bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
+        con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
+        bal = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
         double = True if bal - amount >= 0 else False
         player = []
         comp = []
@@ -161,13 +160,13 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
             elif str(reaction.emoji) == self.blackjack_reactions['double'] and double:
                 new(player)
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
+                con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -amount}})
                 amount = amount * 2
                 playing = False
 
             elif str(reaction.emoji) == self.blackjack_reactions['fold']:
                 playing = False
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": math.floor(amount / 2)}})
+                con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": math.floor(amount / 2)}})
                 embed = show()
                 embed.description = 'Du hast aufgegeben!'
                 await msg.edit(embed=embed)
@@ -188,7 +187,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         if player_total == 21 and comp_total != 21:
             embed.description = f'Blackjack! Du hast **{round(amount * 1.5)}** :dollar: gewonnen!'
             await msg.edit(embed=embed)
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": round(amount * 2.5)}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": round(amount * 2.5)}})
             return
 
         elif player_total > 21:
@@ -196,18 +195,18 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
         elif comp_total > 21:
             embed.description = f'Du hast **{amount}** :dollar: gewonnen!'
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 2}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 2}})
 
         elif player_total < comp_total:
             embed.description = f'Du hast **{amount}** :dollar: verloren!'
 
         elif player_total == comp_total:
             embed.description = 'Unentschieden!'
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount}})
 
         else:
             embed.description = f'Du hast **{amount}** :dollar: gewonnen!'
-            self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 2}})
+            con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": amount * 2}})
 
         embed.set_field_at(1, name=f"{ctx.bot.user.name} ({comp_total})", value=' '.join(comp), inline=True)
         await msg.edit(embed=embed)
@@ -233,7 +232,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             if not content.isdigit() and not content in ['all', 'max']:
                 await ctx.send(f'{message.author.mention} Nutze: `ok join [Einsatz]`')
             else:
-                bal = self.con["stats"].find_one({"_id": message.author.id}, {"balance": 1})["balance"]
+                bal = con["stats"].find_one({"_id": message.author.id}, {"balance": 1})["balance"]
                 if content in ['max', 'all']:
                     bet = bal
                 elif int(content) > bal:
@@ -244,7 +243,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 key = str(message.author.id)
                 jackpot[key] = jackpot.get(key, 0) + bet
                 price += bet
-                self.con["stats"].update({"_id": message.author.id}, {"$inc": {"balance": -bet}})
+                con["stats"].update({"_id": message.author.id}, {"$inc": {"balance": -bet}})
                 embed=discord.Embed(color=0xC8B115, title=f':moneybag: Jackpot ─ {price} Dollar', description='Benutze `ok join <Einsatz>`, um teilzunehmen\n')
                 embed.set_footer(text='60 seconds left')
                 for user, bet in sorted(jackpot.items(), key=lambda item: item[1], reverse=True):
@@ -260,7 +259,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 if randint <= bet:
                     break
             await msg.edit(embed=discord.Embed(color=0xC8B115, title=':moneybag: Jackpot ─ GEWINNER', description=f'<@{winner}> hat den Jackpot geknackt! **+{price} :dollar:**'))
-            self.con["stats"].update({"_id": winner}, {"$inc": {"balance": price}})
+            con["stats"].update({"_id": winner}, {"$inc": {"balance": price}})
 
 def setup(bot):
     bot.add_cog(Gambling(bot))

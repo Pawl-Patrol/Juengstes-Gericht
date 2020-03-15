@@ -1,17 +1,17 @@
 import discord
 from discord.ext import commands, timers
-from main import connection
+from main import con
 from utils.checks import commands_or_casino_only, owner_only
 import asyncio
 
 
 def remove_item(user, item, amount):
-    inv = connection["inventory"].find_one(
+    inv = con["inventory"].find_one(
         {"_id": user.id})
     if inv[item] == amount:
-        connection["inventory"].update({"_id": user.id}, {"$unset": {item: 1}})
+        con["inventory"].update({"_id": user.id}, {"$unset": {item: 1}})
     else:
-        connection["inventory"].update({"_id": user.id}, {"$inc": {item: -amount}})
+        con["inventory"].update({"_id": user.id}, {"$inc": {item: -amount}})
 
 
 class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
@@ -19,7 +19,6 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
         self.emoji = ":money_with_wings:"
         self.bot = bot
-        self.con = connection
         self.timer_manager = timers.TimerManager(bot)
 
     @commands.command(usage="shop [page]", aliases=['market', 'store'])
@@ -28,7 +27,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def shop(self, ctx, page: int = 1):
         """Zeigt den Shop"""
 
-        shop = list(self.con["items"].find()) + list(self.con["tools"].find({"buy": {"$gt": 0}}))
+        shop = list(con["items"].find()) + list(con["tools"].find({"buy": {"$gt": 0}}))
         shop_items = []
         for item in shop:
             if item["buy"]:
@@ -83,11 +82,11 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             return
         arg = args[0]
         amount = int(args[1])
-        item = self.con["items"].find_one({"_id": arg, "buy": {"$gt": 0}})
+        item = con["items"].find_one({"_id": arg, "buy": {"$gt": 0}})
         if not item:
-            item = self.con["tools"].find_one({"_id": arg, "buy": {"$gt": 0}})
+            item = con["tools"].find_one({"_id": arg, "buy": {"$gt": 0}})
         if item:
-            bal = self.con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
+            bal = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
             if bal < item["buy"] * amount:
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.red(),
@@ -95,8 +94,8 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     description=f"Du brauchst mindestens **{item['buy'] * amount}** :dollar:"
                 ))
             else:
-                self.con["inventory"].update({"_id": ctx.author.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -(item["buy"] * amount)}})
+                con["inventory"].update({"_id": ctx.author.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
+                con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -(item["buy"] * amount)}})
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.green(),
                     title="Transaktion erfolgreich",
@@ -111,7 +110,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def sell(self, ctx, *, args: str):
         """Verkauft ein Item"""
         if args.lower() == "all":
-            inv = self.con["inventory"].find_one({"_id": ctx.author.id})
+            inv = con["inventory"].find_one({"_id": ctx.author.id})
             if not inv:
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.red(),
@@ -128,7 +127,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 if message.content.lower() in ["n", "nein", "no"]:
                     await msg.edit(content="*Aktion abgebrochen*")
                     return
-                prices = {i["_id"]: i["sell"] for i in list(self.con["items"].find()) + list(self.con["tools"].find())}
+                prices = {i["_id"]: i["sell"] for i in list(con["items"].find()) + list(con["tools"].find())}
                 post = {}
                 bal = 0
                 i = 0
@@ -138,8 +137,8 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         post[item] = 1
                         i += count
                         bal += count * prices[item]
-                self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": bal}})
-                self.con["inventory"].delete_one({"_id": ctx.author.id})
+                con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": bal}})
+                con["inventory"].delete_one({"_id": ctx.author.id})
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.green(),
                     title="Transaktion erfolgreich",
@@ -154,11 +153,11 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 return
             arg = args[0]
             amount = int(args[1])
-            item = self.con["items"].find_one({"_id": arg})
+            item = con["items"].find_one({"_id": arg})
             if not item:
-                item = self.con["tools"].find_one({"_id": arg})
+                item = con["tools"].find_one({"_id": arg})
             if item:
-                count = self.con["inventory"].find_one(
+                count = con["inventory"].find_one(
                     {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
                 if not count:
                     await ctx.send(embed=discord.Embed(
@@ -168,7 +167,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     ))
                 else:
                     sell = item['sell'] * amount
-                    self.con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": sell}})
+                    con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": sell}})
                     remove_item(ctx.author, item["_id"], amount)
                     await ctx.send(embed=discord.Embed(
                         color=discord.Color.green(),
@@ -185,7 +184,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         """Zeigt dein Inventar"""
         if user is None:
             user = ctx.author
-        results = self.con["inventory"].find_one({"_id": user.id})
+        results = con["inventory"].find_one({"_id": user.id})
         if not results:
             await ctx.send(embed=discord.Embed(
                 color=discord.Color.red(),
@@ -193,8 +192,8 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 description="Keine Items gefunden"
             ))
         else:
-            items = {i["_id"]: i for i in list(self.con["items"].find())}
-            tools = {i["_id"]: i for i in list(self.con["tools"].find())}
+            items = {i["_id"]: i for i in list(con["items"].find())}
+            tools = {i["_id"]: i for i in list(con["tools"].find())}
             value = 0
             for entry in results:
                 if entry == "_id":
@@ -265,7 +264,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             "sell": sell,
             "description": description
         }
-        self.con["items"].update({"_id": item.lower()}, post, upsert=True)
+        con["items"].update({"_id": item.lower()}, post, upsert=True)
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title="Item hinzugefügt",
@@ -282,7 +281,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             "sell": sell,
             "description": description
         }
-        self.con["tools"].update({"_id": item.lower()}, post, upsert=True)
+        con["tools"].update({"_id": item.lower()}, post, upsert=True)
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title="Tool hinzugefügt",
@@ -294,7 +293,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @owner_only()
     async def delitem(self, ctx, item):
         """Entfernt ein Item"""
-        self.con["items"].delete_one({"_id": item["_id"]})
+        con["items"].delete_one({"_id": item["_id"]})
         await ctx.send(embed=discord.Embed(
             color=discord.Color.green(),
             title="Item entfernt",
@@ -312,11 +311,11 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             return
         arg = args[0]
         amount = int(args[1])
-        item = self.con["items"].find_one({"_id": arg})
+        item = con["items"].find_one({"_id": arg})
         if not item:
-            item = self.con["tools"].find_one({"_id": arg})
+            item = con["tools"].find_one({"_id": arg})
         if item:
-            count = self.con["inventory"].find_one(
+            count = con["inventory"].find_one(
                 {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
             if not count:
                 await ctx.send(embed=discord.Embed(
@@ -326,7 +325,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 ))
             else:
                 remove_item(ctx.author, item["_id"], amount)
-                self.con["inventory"].update({"_id": user.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
+                con["inventory"].update({"_id": user.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
                 await ctx.send(f"{user.mention} Du hast {amount}x {item['_id'].title()} {item['emoji']} von **{ctx.author}** bekommen")
         else:
             await ctx.send(f"{user.mention} Ich konnte dieses Item nicht finden.")

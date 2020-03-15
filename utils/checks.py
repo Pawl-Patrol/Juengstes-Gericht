@@ -1,5 +1,5 @@
 from discord.ext import commands
-from main import lvlcalc, connection as con
+from main import lvlcalc, con
 import datetime
 import json
 

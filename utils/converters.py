@@ -1,5 +1,5 @@
 from discord.ext import commands
-from main import connection as con
+from main import con
 import re
 
 

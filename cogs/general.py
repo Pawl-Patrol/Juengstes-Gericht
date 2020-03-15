@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from main import connection
+from main import con
 from utils.utils import convert_upgrade_levels
 from utils.checks import commands_only
 from main import lvlcalc
@@ -13,7 +13,6 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     def __init__(self, bot):
         self.emoji = ":dizzy:"
         self.bot = bot
-        self.con = connection
         with open("data/config.json", "r") as f:
             self.config = json.load(f)
         self.booster_role_position = self.config["booster_role_position"]
@@ -23,7 +22,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 10, commands.BucketType.member)
     async def afk(self, ctx, message: str = "Keinen Grund angegeben"):
         """Setzt eine Afk-Nachricht, die andere sehen werden, wenn sie dich pingen"""
-        self.con["afk"].update({"_id": ctx.author.id}, {
+        con["afk"].update({"_id": ctx.author.id}, {
             "message": message,
             "time": datetime.datetime.utcnow()
         }, upsert=True)
@@ -88,14 +87,14 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def create(self, ctx, color: discord.Color, *, name: str):
         """Erstellt dir eine eigene Rolle"""
-        check = self.con["booster"].find_one({"_id": ctx.author.id})
+        check = con["booster"].find_one({"_id": ctx.author.id})
         if check:
             await ctx.send(f"{ctx.author.mention} Du besitzt bereits eine Rolle")
         else:
             role = await ctx.guild.create_role(color=color, name=name)
             await ctx.author.add_roles(role)
             await role.edit(position=len(ctx.guild.roles) - self.booster_role_position)
-            self.con["booster"].insert_one({"_id": ctx.author.id, "role": role.id})
+            con["booster"].insert_one({"_id": ctx.author.id, "role": role.id})
             await ctx.send(embed=discord.Embed(
                 color=color,
                 title=name,
@@ -107,11 +106,11 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 5, commands.BucketType.user)
     async def delete(self, ctx):
         """Löscht deine aktuelle Rolle"""
-        role = self.con["booster"].find_one({"_id": ctx.author.id})
+        role = con["booster"].find_one({"_id": ctx.author.id})
         if not role:
             await ctx.send(f"{ctx.author.mention} Du besitzt keine Rolle")
         else:
-            self.con["booster"].delete_one({"_id": ctx.author.id})
+            con["booster"].delete_one({"_id": ctx.author.id})
             role = ctx.guild.get_role(role["role"])
             await role.delete()
             await ctx.send(f"{ctx.author.mention} Deine Rolle wurde erfolgreich gelöscht")
@@ -121,7 +120,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def color(self, ctx, color: discord.Color):
         """Ändert die Farbe deiner Rolle"""
-        role = self.con["booster"].find_one({"_id": ctx.author.id})
+        role = con["booster"].find_one({"_id": ctx.author.id})
         if not role:
             await ctx.send(f"{ctx.author.mention} Du besitzt keine Rolle")
         else:
@@ -138,7 +137,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def name(self, ctx, *, name: str):
         """Ändert den Namen deiner Rolle"""
-        role = self.con["booster"].find_one({"_id": ctx.author.id})
+        role = con["booster"].find_one({"_id": ctx.author.id})
         if not role:
             await ctx.send(f"{ctx.author.mention} Du besitzt keine Rolle")
         else:
@@ -155,7 +154,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 3, commands.BucketType.user)
     async def random(self, ctx):
         """Gibt deiner Rolle eine zufällige Farbe"""
-        role = self.con["booster"].find_one({"_id": ctx.author.id})
+        role = con["booster"].find_one({"_id": ctx.author.id})
         if not role:
             await ctx.send(f"{ctx.author.mention} Du besitzt keine Rolle")
         else:
@@ -172,9 +171,9 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands_only()
     async def upgrades(self, ctx, upgrade: str = None, amount: str = "1"):
         """Zeigt deine Upgrades"""
-        stats = self.con["stats"].find_one({"_id": ctx.author.id})
+        stats = con["stats"].find_one({"_id": ctx.author.id})
         level, _, _ = lvlcalc(stats["total_xp"])
-        u = self.con["upgrades"].find_one({"_id": ctx.author.id})
+        u = con["upgrades"].find_one({"_id": ctx.author.id})
         stat_points = level-(u['multiplier'] + u['money'] + u['crit'])
         if upgrade is None:
             embed = discord.Embed(
@@ -211,7 +210,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     await ctx.send(f"{ctx.author.mention} Bitte gib eine Zahl oder max an. Z.b. `{ctx.prefix}upgrade crit max`")
                     return
                 if u[upgrade.lower()] + amount <= 10:
-                    self.con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {upgrade.lower(): amount}})
+                    con["upgrades"].update({"_id": ctx.author.id}, {"$inc": {upgrade.lower(): amount}})
                     await ctx.send(f"{ctx.author.mention} Du hast **{upgrade.title()}** auf Level **{u[upgrade.lower()]+amount}** erweitert")
                 elif u[upgrade.lower()] == 10:
                     await ctx.send(f"{ctx.author.mention} Du hast bereits das Maximallevel von **{upgrade.title()}** erreicht.")
@@ -226,7 +225,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     async def todo(self, ctx):
         """Deine Todo-Liste"""
         if ctx.invoked_subcommand is None:
-            todo = self.con["todo"].find_one({"_id": ctx.author.id})
+            todo = con["todo"].find_one({"_id": ctx.author.id})
             if todo:
                 msg = f"**__Todo von {ctx.author}__:**  "
                 for i, entry in enumerate(todo["todo"], 1):
@@ -238,18 +237,18 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @todo.command(usage="add <Eintrag>")
     async def add(self, ctx, *, entry: str):
         """Fügt einen neuen Stichpunkt zu deiner Todo-Liste hinzu"""
-        self.con["todo"].update({"_id": ctx.author.id}, {"$push": {"todo": entry}}, upsert=True)
+        con["todo"].update({"_id": ctx.author.id}, {"$push": {"todo": entry}}, upsert=True)
         await ctx.send(f"{ctx.author.mention} Neuer Stichpunkt wurde hinzugefügt.\n```{entry}```")
 
     @todo.command(usage="edit <Nummer> <Eintrag>")
     async def edit(self, ctx, number: int, *, entry: str):
         """Ändert einen Punkt in deiner Todo-Liste"""
-        todo = self.con["todo"].find_one({"_id": ctx.author.id})
+        todo = con["todo"].find_one({"_id": ctx.author.id})
         if todo:
             todo = todo["todo"]
             if 1 <= number <= len(todo):
                 todo[number - 1] = entry
-                self.con["todo"].update({"_id": ctx.author.id}, {"$set": {"todo": todo}}, upsert=True)
+                con["todo"].update({"_id": ctx.author.id}, {"$set": {"todo": todo}}, upsert=True)
                 await ctx.send(f"{ctx.author.mention} Stichpunkt wurde geändert.\n```{entry}```")
             else:
                 await ctx.send(f"{ctx.author.mention} Stichpunkt nicht gefunden!")
@@ -259,15 +258,15 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @todo.command(usage="remove <Nummer>", aliases=["del"])
     async def remove(self, ctx, *, number: int):
         """Entfernt einen Stichpunkt aus deiner Todo-Liste"""
-        todo = self.con["todo"].find_one({"_id": ctx.author.id})
+        todo = con["todo"].find_one({"_id": ctx.author.id})
         if todo:
             todo = todo["todo"]
             if 1 <= number <= len(todo):
                 if len(todo) == 1:
-                    self.con["todo"].delete_one({"_id": ctx.author.id})
+                    con["todo"].delete_one({"_id": ctx.author.id})
                 else:
                     todo.pop(number - 1)
-                    self.con["todo"].update({"_id": ctx.author.id}, {"$set": {"todo": todo}})
+                    con["todo"].update({"_id": ctx.author.id}, {"$set": {"todo": todo}})
                 await ctx.send(f"{ctx.author.mention} Stichpunkt wurde gelöscht.")
             else:
                 await ctx.send(f"{ctx.author.mention} Stichpunkt nicht gefunden!")
@@ -277,9 +276,9 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @todo.command(aliases=["clean"])
     async def clear(self, ctx):
         """Entfernt alle Stichpunkte aus deiner Todo-Liste"""
-        todo = self.con["todo"].find_one({"_id": ctx.author.id})
+        todo = con["todo"].find_one({"_id": ctx.author.id})
         if todo:
-            self.con["todo"].delete_one({"_id": ctx.author.id})
+            con["todo"].delete_one({"_id": ctx.author.id})
             await ctx.send(f"{ctx.author.mention} {len(todo)} Stichpunkte wurden gelöscht.")
         else:
             await ctx.send(f"{ctx.author.mention} Du hast keine Todo-Liste!")
@@ -291,11 +290,11 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         """Zeigt dir Informationen über ein Item"""
         async with ctx.typing():
             item = item.lower()
-            result1 = self.con["items"].find_one({"_id": item})
-            result2 = self.con["tools"].find_one({"_id": item})
-            result3 = self.con["mine-drops"].find_one({"_id": item})
-            result4 = self.con["fish-drops"].find_one({"_id": item})
-            items = list(self.con["items"].find())
+            result1 = con["items"].find_one({"_id": item})
+            result2 = con["tools"].find_one({"_id": item})
+            result3 = con["mine-drops"].find_one({"_id": item})
+            result4 = con["fish-drops"].find_one({"_id": item})
+            items = list(con["items"].find())
             emojis = {item["_id"]: item["emoji"] for item in items}
             embed = discord.Embed(
                 color=discord.Color.blurple(),
