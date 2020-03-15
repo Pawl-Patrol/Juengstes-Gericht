@@ -131,7 +131,7 @@ class Gambling(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         msg = None
         if player_total == 21:
             playing = False
-            msg = await ctx.send(discord.Embed(
+            msg = await ctx.send(embed=discord.Embed(
                 title=":black_joker: Blackjack"
             ))
         else:
