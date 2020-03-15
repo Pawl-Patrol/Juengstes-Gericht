@@ -25,7 +25,9 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         avatar_url = user.avatar_url_as(format="png", size=512)
         async with self.session.get(str(avatar_url)) as response:
             avatar_bytes = await response.read()
-        return avatar_bytes
+        with Image.open(BytesIO(avatar_bytes)) as im:
+            avatar = im.convert("RGB")
+        return avatar
 
     @commands.command()
     @commands.cooldown(3, 10, commands.BucketType.user)
@@ -63,14 +65,12 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             draw.text((452 + (850 - w) / 2, 365), f"{xp}/{cap}", (255, 255, 255), font=fontsmall)
             draw.text((450, 110), f"Text-XP: {stats['message_xp']}", (255, 255, 255), font=font)
             draw.text((450, 220), f"Voice-XP: {stats['voice_xp']}", (255, 255, 255), font=font)
-            avatar_bytes = await self.get_avatar(user)
-            with Image.open(BytesIO(avatar_bytes)) as im:
-                im = im.resize((400, 400))
-                rgb_avatar = im.convert("RGB")
-                with Image.new("L", im.size, 0) as mask:
-                    mask_draw = ImageDraw.Draw(mask)
-                    mask_draw.ellipse([(0, 0), im.size], fill=255)
-                    img.paste(rgb_avatar, (1450, 70), mask=mask)
+            avatar = await self.get_avatar(user)
+            avatar = avatar.resize((400, 400))
+            with Image.new("L", avatar.size, 0) as mask:
+                mask_draw = ImageDraw.Draw(mask)
+                mask_draw.ellipse([(0, 0), avatar.size], fill=255)
+                img.paste(avatar, (1450, 70), mask=mask)
             img.save('data/media/rank_gen.png')
             file = discord.File("data/media/rank_gen.png")
             await ctx.send(file=file, content=f":clipboard: | **Rang von {user}**")

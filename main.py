@@ -3,6 +3,8 @@ from discord.ext import commands, tasks, timers
 from utils.help_command import HelpCommand
 from utils.utils import convert_upgrade_levels, lvlcalc
 from data.auto_info import auto_info
+from aiohttp import ClientSession
+from io import BytesIO
 import pymongo
 import os
 import json
@@ -11,6 +13,10 @@ import datetime
 import random
 import math
 import asyncio
+from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
+
 
 con = pymongo.MongoClient(os.environ.get("DB_CONNECTION"))["Dc-Server"]
 
@@ -29,6 +35,7 @@ class Bot(commands.Bot):
                          owner_id=376100578683650048)
         self.token = os.environ.get("DISCORD_TOKEN")
         self.timer_manager = timers.TimerManager(self)
+        self.session = None
         with open("data/reaction_roles.json", "r", encoding="utf8") as f:
             self.reaction_roles = json.load(f)
         with open("data/config.json", "r") as f:
@@ -51,6 +58,7 @@ class Bot(commands.Bot):
         super().run(self.token, reconnect=True)
 
     async def on_ready(self):
+        self.session = ClientSession(loop=self.loop)
         self.voice_xp.start()
         await self.change_presence(activity=discord.Activity(type=2, name=f"ok"), status=3)
         print("Eingeloggt als", self.user.name)
@@ -331,10 +339,49 @@ class Bot(commands.Bot):
         )
         await member.send(embed=embed)
         await self.update_membercount(member.guild)
+        await self.send_welcome_message(member)
+
+    async def get_avatar(self, user):
+        avatar_url = user.avatar_url_as(format="png", size=512)
+        async with self.session.get(str(avatar_url)) as response:
+            avatar_bytes = await response.read()
+        with Image.open(BytesIO(avatar_bytes)) as im:
+            avatar = im.convert("RGB")
+        return avatar
+
+    async def send_welcome_message(self, member):
         gate = member.guild.get_channel(self.config["gate_channel"])
-        embed = discord.Embed(color=discord.Color.green())
-        embed.set_author(name=f"{member} hat den Server betreten", icon_url=member.avatar_url)
-        await gate.send(embed=embed)
+        name = str(member)
+        fontsize = 50
+        avatar = await self.get_avatar(member)
+        avatar = avatar.resize((350, 350))
+        size = avatar.size[0]
+        outline = 5
+        with Image.open("data/media/welcome.jpg") as img:
+            draw = ImageDraw.Draw(img)
+            pos_y = int((img.size[1]/2)-(avatar.size[0]/2)-outline)
+            pos_x = img.size[0]-size-pos_y
+            draw.ellipse([(pos_x-outline, pos_y-outline), (pos_x+size+outline, pos_y+size+outline)], fill=(255, 255, 255))
+            font = ImageFont.truetype("data/days.otf", fontsize)
+            while (font.getsize(name)[0]+100 < pos_x):
+                fontsize += 2
+                font = ImageFont.truetype("data/days.otf", fontsize)
+            w, h = draw.textsize(name, font=font)
+            draw.text(((pos_x-w)/2, (img.size[1]-h)/2), name, (255, 255, 255), font=font)
+            with Image.new("L", avatar.size, 0) as mask:
+                draw = ImageDraw.Draw(mask)
+                draw.ellipse([(0, 0), avatar.size], fill=255)
+                img.paste(avatar, (pos_x, pos_y), mask=mask)
+            img.save('data/media/welcome_gen.png')
+        file = discord.File("data/media/welcome_gen.png")
+        embed = discord.Embed(
+            color=discord.Color.purple(),
+            title=f"Willkommen auf {member.guild.name}!",
+            description=f"Bitte lies die [Regeln](https://discordapp.com/channels/680052595322388507/680134485693693963) & [Infos](https://discordapp.com/channels/680052595322388507/680134488067539022) und gib dir [Selfroles](https://discordapp.com/channels/680052595322388507/680134495197724746).\nDu bist das **{member.guild.member_count}.**  Mitglied"
+        )
+        embed.timestamp = datetime.datetime.utcnow()
+        embed.set_image(url="attachment://welcome_gen.png")
+        await gate.send(file=file, embed=embed)
 
     @commands.Cog.listener()
     async def on_member_remove(self, member):
@@ -351,7 +398,7 @@ class Bot(commands.Bot):
 
     async def update_membercount(self, guild):
         channel = guild.get_channel(self.config["membercount_channel"])
-        await channel.edit(name=f"{len(guild.members)} Mitglieder")
+        #await channel.edit(name=f"{len(guild.members)} Mitglieder")
 
     async def on_raid_mode_expire(self, guild, message):
         """Wird ausgeführt, wenn der Raidmode vorbei ist"""
