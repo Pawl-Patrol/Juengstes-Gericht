@@ -210,6 +210,7 @@ class Bot(commands.Bot):
         u = con["upgrades"].find_one({"_id": member.id})
         if not u:
             self.set_standard_upgrades(member)
+            return
         mult, money, crit = convert_upgrade_levels(u['multiplier'], u['money'], u['crit'])
         inc_exp = round(random.randint(15, 25) * mult / 100)
         inc_bal = money
