@@ -388,8 +388,12 @@ class Bot(commands.Bot):
     async def on_member_remove(self, member):
         await self.update_membercount(member.guild)
         gate = member.guild.get_channel(self.config["gate_channel"])
-        embed = discord.Embed(color=discord.Color.red())
+        embed = discord.Embed(
+            color=discord.Color.red(),
+            description=f"Auf Wiedersehen! Jetzt sind wir nur noch **{member.guild.member_count}** Mitglieder."
+        )
         embed.set_author(name=f"{member} hat den Server verlassen", icon_url=member.avatar_url)
+        embed.timestamp = datetime.datetime.utcnow()
         await gate.send(embed=embed)
         stats = con["stats"].find_one({"_id": member.id})
         if stats["total_xp"] < 1000:
@@ -399,7 +403,7 @@ class Bot(commands.Bot):
 
     async def update_membercount(self, guild):
         channel = guild.get_channel(self.config["membercount_channel"])
-        #await channel.edit(name=f"{len(guild.members)} Mitglieder")
+        await channel.edit(name=f"{guild.member_count} Mitglieder")
 
     async def on_raid_mode_expire(self, guild, message):
         """Wird ausgeführt, wenn der Raidmode vorbei ist"""

@@ -1,17 +1,20 @@
 import discord
 from discord.ext import commands
-from utils.checks import min_lvl
+from utils.checks import min_lvl, commands_only
+from utils.chatbot import NewChatBot
 import asyncio
 from main import con
 import urllib.parse as parse
 import upsidedown
 import random
 
+
 class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     def __init__(self, bot):
         self.emoji = ":rocket:"
         self.bot = bot
+        self.ChatBot = NewChatBot()
 
     @commands.command(enabled=False, usage="marry <user>")
     @commands.cooldown(1, 5, commands.BucketType.user)
@@ -122,13 +125,64 @@ class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         await ctx.send(upsidedown.transform(discord.utils.escape_mentions(text)))
 
     @commands.command(aliases=['lovecalc'])
-    async def ship(self, ctx, user1:discord.User, user2:discord.User):
+    async def ship(self, ctx, user1: discord.User, user2: discord.User):
         """Berechnet die Liebe zwischen 2 Personen"""
         ship = random.randint(0, 100)
         bar = round(ship / 10) * '▰' + (10 - round(ship / 10)) * '▱'
         await ctx.send(embed=discord.Embed(color=0xFF0000, title=f':heart: Lovecalculator', description=f'[{bar}](https://www.youtube.com/watch?v=WiinVuzh4DA) **{ship}%**\n**{user1.display_name}** & **{user2.display_name}**'))
 
+    @commands.command(aliases=['chatbot'])
+    @commands_only()
+    @commands.cooldown(1, 60, commands.BucketType.channel)
+    async def chat(self, ctx):
+        def create_embed(text):
+            text = text.replace("#PUNKT#", ".")
+            embed = discord.Embed(
+                color=discord.Color.purple(),
+                title=f":robot: ChatBot (Alpha)",
+                description=f"~ {text[:1].capitalize() + text[1:]}"
+            )
+            return embed
+        trigger = "Hallo! Wie kann ich dir helfen?"
+        while True:
+            msg = await ctx.send(embed=create_embed(trigger))
+            try:
+                message = await ctx.bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel, timeout=60)
+            except asyncio.TimeoutError:
+                await msg.edit(embed=create_embed("Sitzung beendet."))
+                return
+            response = message.content.lower()
+            self.ChatBot.process_response(trigger, response)
+            trigger = self.ChatBot.get_response(response)
+
+    @commands.command()
+    @commands_only()
+    async def chatbotentry(self, ctx, trigger: str, response: str):
+        embed = discord.Embed(
+            color=discord.Color.orange(),
+            title="Neuer ChatBot Eintrag",
+            description=f"**Trigger**: {trigger}\n**Response**: {response}"
+        )
+        msg = await ctx.send(embed=embed)
+        reactions = ["✅", "❌"]
+        for r in reactions:
+            await msg.add_reaction(r)
+        try:
+            reaction, user = await ctx.bot.wait_for("reaction_add", check=lambda r, u: r.message.id == msg.id and u == ctx.author and str(r.emoji) in reactions, timeout=60)
+        except asyncio.TimeoutError:
+            embed.color = discord.Color.red()
+            await msg.edit(embed=embed)
+            await msg.clear_reactions()
+            return
+        await msg.clear_reactions()
+        if str(reaction.emoji) == reactions[0]:
+            embed.color = discord.Color.green()
+            await msg.edit(embed=embed)
+            self.ChatBot.process_response(trigger, response)
+        elif str(reaction.emoji) == reactions[1]:
+            embed.color = discord.Color.red()
+            await msg.edit(embed=embed)
+
 
 def setup(bot):
     bot.add_cog(Fun(bot))
-    
