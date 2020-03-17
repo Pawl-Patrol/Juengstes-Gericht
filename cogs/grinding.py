@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from main import con
 from utils.checks import commands_only, has_pet
-from utils.utils import convert_pet, lvlcalc, get_tool_rarity, get_random_drops
+from utils.utils import convert_pet, lvlcalc, get_tool_rarity, get_random_drops, get_repair_item
 from cogs.economy import remove_item
 import datetime
 import random
@@ -134,6 +134,53 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     ))
             else:
                 await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
+
+    @commands.command()
+    @commands.cooldown(1, 3, commands.BucketType.user)
+    @commands_only()
+    async def repair(self, ctx, *, tool: str):
+        """Repariert ein Werkzeug"""
+        tool = tool.lower()
+        inv = con["inv_tools"].find_one({"_id": ctx.author.id, tool: {"$exists": True}})
+        if inv:
+            rarity = get_tool_rarity(tool)
+            item = get_repair_item(rarity)
+            item = con["items"].find_one({"_id": item})
+            check = con["inventory"].find_one({"_id": ctx.author.id, item["_id"]: {"$gt": 0}})
+            if check:
+                dur = inv[tool]["dur"]
+                cap = inv[tool]["max"]
+                if dur == cap:
+                    await ctx.send(embed=discord.Embed(
+                        color=discord.Color.orange(),
+                        title="Dieses Tool ist schon repariert",
+                        description=f"{ctx.author.mention} Du kannst dieses Tool nicht reparieren"
+                    ))
+                else:
+                    dur += 5
+                    if dur > cap:
+                        dur = cap
+                    con["inv_tools"].update({"_id": ctx.author.id}, {"$set": {f"{tool}.dur": dur}})
+                    remove_item(ctx.author, item["_id"], 1)
+                    await ctx.send(embed=discord.Embed(
+                        color=discord.Color.green(),
+                        title="Reparatur erfolgreich",
+                        description=f"{ctx.author.mention} Du hast **{tool.title()}** repariert (`{inv[tool]['dur']}` -> `{dur}`)"
+                    ))
+            else:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Du hast nicht die nötigen Materialien",
+                    description=f"{ctx.author.mention} Du brauchst mindestens **1x {item['emoji']} {item['_id'].title()}**"
+                ))
+        else:
+            await ctx.send(embed=discord.Embed(
+                color=discord.Color.red(),
+                title="Spitzhacke nicht gefunden",
+                description=f"{ctx.author.mention} Bitte überprüfe den Namen oder stelle sicher, dass du dieses Tool besitzt"
+            ))
+            return
+
 
     @commands.command()
     @commands.cooldown(1, 300, commands.BucketType.user)

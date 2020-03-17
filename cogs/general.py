@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 from main import con
-from utils.utils import convert_upgrade_levels
+from utils.utils import convert_upgrade_levels, get_tool_rarity, get_drop_odds
 from utils.checks import commands_only
 from main import lvlcalc
 import datetime
@@ -292,10 +292,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             item = item.lower()
             result1 = con["items"].find_one({"_id": item})
             result2 = con["tools"].find_one({"_id": item})
-            result3 = con["mine-drops"].find_one({"_id": item})
-            result4 = con["fish-drops"].find_one({"_id": item})
-            items = list(con["items"].find())
-            emojis = {item["_id"]: item["emoji"] for item in items}
+            emojis = {item["_id"]: item["emoji"] for item in list(con["items"].find())}
             embed = discord.Embed(
                 color=discord.Color.blurple(),
                 title=f"__Infos über {item.title()}__"
@@ -303,18 +300,24 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             if not result1 and not result2:
                 await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
                 return
+            description = ""
             if result1:
                 result = result1
-                description = f"\n**Einkaufspreis**: {result['buy']} Dollar"
             else:
                 result = result2
                 description = ""
-                if result3 or result4:
-                    item = result3 or result4
-                    description += f"\n**Bruch-Wahrscheinlichkeit**: {int(item['break'] * 100)}%\n**Item-Drops**: {item['items']} Items\n\n:bar_chart: **Item-Drop-Wahrscheinlichkeiten**:"
-                    for drop, prop in reversed(list(item["props"].items())):
-                        description += f"\n> {int(prop*100)}% {emojis[drop]} **{drop.title()}**"
-            embed.description = f"**Beschreibung**: {result['description']}\n**Emoji**: {result['emoji']}\n**Verkaufspreis**: {result['sell']} Dollar" + description
+                description += f"\n**Haltbarkeit**: {result['dur']} HP\n\n:bar_chart: **Item-Drop-Wahrscheinlichkeiten**:"
+                rarity = get_tool_rarity(item.lower())
+                drops = get_drop_odds(rarity)
+                total = sum(list(drops.keys()))
+                for prop, items in drops.items():
+                    items = ' '.join([f"{emojis[item]} **{item.title()}**" for item in items])
+                    description += f"\n> {round(prop/total*100, 1)}% {items}"
+            embed.description = f"**Beschreibung**: {result['description']}\n**Emoji**: {result['emoji']}"
+            if "buy" in result:
+                embed.description += f"\n**Einkaufspreis**: {result['buy']}"
+            embed.description += f"\n**Verkaufspreis**: {result['sell']} Dollar"
+            embed.description += description
             await ctx.send(embed=embed)
 
 

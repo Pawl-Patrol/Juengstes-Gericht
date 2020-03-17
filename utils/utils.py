@@ -51,8 +51,20 @@ def get_tool_rarity(tool):
         rarity = 1
     return rarity
 
+def get_repair_item(rarity):
+    if rarity == 5:
+        item = "infinity ingot"
+    elif rarity == 4:
+        item = "neutron ingot"
+    elif rarity == 3:
+        item = "komet"
+    elif rarity == 2:
+        item = "stern"
+    else:
+        item = "meteorit"
+    return item
 
-def get_random_drops(rarity, amount):
+def get_drop_odds(rarity):
     drops = {
         60 + rarity * 2: ["ziegelstein", "spinnwebe", "kleeblatt", "minipilz"],  # COMMON
         25 + rarity * 1.8: ["juwelfragment", "energiestaub", "sternenstaub"],  # UNCOMMON
@@ -60,6 +72,10 @@ def get_random_drops(rarity, amount):
         7 + rarity * 1.4: ["herzschuppe", "feuerstein", "griffklaue"],  # EPIC
         1 + rarity * 1.2: ["edelstein", "neutron nugget"]  # LEGENDARY
     }
+    return drops
+
+def get_random_drops(rarity, amount):
+    drops = get_drop_odds(rarity)
     results = random.choices(list(drops.values()), weights=list(drops.keys()), k=amount)
     loot = {}
     for result in results:
