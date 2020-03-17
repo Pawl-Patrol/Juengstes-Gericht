@@ -555,7 +555,7 @@ class Bot(commands.Bot):
                     if role:
                         await role.delete()
 
-    async def oon_command_error(self, ctx, error):
+    async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.CheckFailure):
