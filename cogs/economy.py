@@ -83,6 +83,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         arg = args[0]
         amount = int(args[1])
         item = con["items"].find_one({"_id": arg, "buy": {"$gt": 0}})
+        tool = False if item else True
         if not item:
             item = con["tools"].find_one({"_id": arg, "buy": {"$gt": 0}})
         if item:
@@ -94,7 +95,20 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     description=f"Du brauchst mindestens **{item['buy'] * amount}** :dollar:"
                 ))
             else:
-                con["inventory"].update({"_id": ctx.author.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
+                if tool:
+                    inv = con["inv_tools"].find_one({"_id": ctx.author.id})
+                    if not inv:
+                        pass
+                    elif item["_id"] in inv:
+                        await ctx.send(f"{ctx.author.mention} Du kannst nur maximal 1x **{item['_id'].title()}** haben.")
+                        return
+                    post = {
+                        "dur": item["dur"],
+                        "max": item["dur"]
+                    }
+                    con["inv_tools"].update({"_id": ctx.author.id}, {"$set": {item["_id"]: post}}, upsert=True)
+                else:
+                    con["inventory"].update({"_id": ctx.author.id}, {"$inc": {item["_id"]: amount}}, upsert=True)
                 con["stats"].update({"_id": ctx.author.id}, {"$inc": {"balance": -(item["buy"] * amount)}})
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.green(),
@@ -154,8 +168,6 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             arg = args[0]
             amount = int(args[1])
             item = con["items"].find_one({"_id": arg})
-            if not item:
-                item = con["tools"].find_one({"_id": arg})
             if item:
                 count = con["inventory"].find_one(
                     {"_id": ctx.author.id, item["_id"]: {"$gt": amount - 1}})
@@ -163,7 +175,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     await ctx.send(embed=discord.Embed(
                         color=discord.Color.red(),
                         title="Verkaufen nicht möglich",
-                        description=f"Du hast nicht genügend Items"
+                        description=f"Du hast nicht genügend Items oder du kannst dieses Item nicht verkaufen."
                     ))
                 else:
                     sell = item['sell'] * amount
@@ -175,16 +187,25 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         description=f"Du hast **{amount}x {item['emoji']}** {item['_id'].title()} für **{sell}** :dollar: verkauft"
                     ))
             else:
-                await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden.")
+                await ctx.send(f"{ctx.author.mention} Ich konnte dieses Item nicht finden oder du kannst es nicht verkaufen.")
 
-    @commands.command(enabled=False, usage="inventory [page]", aliases=["inv"])
+
+    @commands.command(usage="inventory [page]", aliases=["inv"])
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands_or_casino_only()
     async def inventory(self, ctx, user: discord.User = None):
         """Zeigt dein Inventar"""
+        items_per_page = 8
         if user is None:
             user = ctx.author
         results = con["inventory"].find_one({"_id": user.id})
+        results_tools = con["inv_tools"].find_one({"_id": user.id})
+        if results:
+            if results_tools:
+                results.update(results_tools)
+            results.pop("_id")
+        else:
+            results = results_tools
         if not results:
             await ctx.send(embed=discord.Embed(
                 color=discord.Color.red(),
@@ -196,15 +217,12 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             tools = {i["_id"]: i for i in list(con["tools"].find())}
             value = 0
             for entry in results:
-                if entry == "_id":
-                    continue
                 if entry in tools:
-                    sell = tools[entry]["sell"]
+                    value += tools[entry]["sell"]
                 else:
-                    sell = items[entry]["sell"]
-                value += sell * results[entry]
+                    value += items[entry]["sell"] * results[entry]
             page = 1
-            pages, b = divmod(len(results) - 1, 10)
+            pages, b = divmod(len(results), items_per_page)
             if b != 0:
                 pages += 1
 
@@ -212,21 +230,11 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 embed = discord.Embed(color=0x983233,
                                       title=f":open_file_folder: {user.name}'s Inventar ({p}/{pages})",
                                       description="")
-                for i, item in enumerate(results):
-                    if item == "_id":
-                        continue
-                    elif i < (page - 1) * 10 + 1:
-                        continue
-                    elif i > (page - 1) * 10 + 10:
-                        continue
-                    elif results[item] == 0:
-                        continue
+                for item, count in list(results.items())[(page - 1) * items_per_page:(page - 1) * items_per_page + items_per_page]:
+                    if item in tools:
+                        embed.description += f"\n> **1x {item.title()} {tools[item]['emoji']} ({results[item]['dur']}/{results[item]['max']})**"
                     else:
-                        if item in tools:
-                            emoji = tools[item]['emoji']
-                        else:
-                            emoji = items[item]['emoji']
-                        embed.description += f"\n> **{results[item]}x {item.title()} {emoji}**"
+                        embed.description += f"\n> **{results[item]}x {item.title()} {items[item]['emoji']}**"
                 embed.set_footer(text=f"➼ Gesamtwert: {value}")
                 return embed
 

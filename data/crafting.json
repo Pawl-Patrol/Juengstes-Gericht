@@ -1,87 +1,85 @@
 {
     "rohstoffe": {
         "seil": {
-            "spinnwebe": 12,
-            "kleeblatt": 8,
-            "sternenstaub": 6
+            "spinnwebe": 3,
+            "kleeblatt": 2,
+            "sternenstaub": 2
         },
         "riesenpilz": {
-            "minipilz": 15,
-            "kleeblatt": 6,
-            "sternenstaub": 3,
+            "minipilz": 3,
+            "kleeblatt": 2,
+            "sternenstaub": 1,
             "herzschuppe": 1
         },
         "meteorit": {
-            "ziegelstein": 22,
-            "meteoritstück": 17,
-            "energiestaub": 12,
-            "sternenstaub": 6,
+            "ziegelstein": 5,
+            "meteoritstück": 3,
+            "energiestaub": 2,
+            "sternenstaub": 1,
             "feuerstein": 1
         },
         "stern": {
-            "sternenstück": 10,
-            "sternenstaub": 8,
-            "energiestaub": 7,
-            "meteoritstück": 5,
-            "herzschuppe": 3,
-            "meteorit": 1
-        },
-        "komet": {
-            "kometstück": 10,
-            "energiestaub": 8,
-            "edelstein": 7,
-            "perle": 1
-        },
-        "perle": {
-            "edelstein": 6,
-            "energiestaub": 5,
-            "juwelfragment": 4,
-            "feuerstein": 2,
+            "sternenstück": 5,
+            "energiestaub": 3,
+            "sternenstaub": 2,
             "herzschuppe": 1,
             "meteorit": 1
         },
+        "perle": {
+            "edelstein": 2,
+            "energiestaub": 2,
+            "feuerstein": 1,
+            "herzschuppe": 1,
+            "meteorit": 1
+        },
+        "komet": {
+            "kometstück": 5,
+            "energiestaub": 3,
+            "edelstein": 1,
+            "perle": 1
+        },
         "riesenperle": {
-            "energiestaub": 16,
-            "edelstein": 12,
-            "perle": 3
+            "energiestaub": 5,
+            "perle": 3,
+            "edelstein": 2
         }
     },
     "Materialien":
     {
         "juwel": {
-            "juwelfragment": 10,
-            "sternenstaub": 9,
-            "edelstein": 6,
-            "meteorit": 3,
-            "stern": 2,
+            "juwelfragment": 7,
+            "sternenstaub": 5,
+            "edelstein": 3,
+            "meteorit": 2,
+            "stern": 1,
             "riesenperle": 1,
             "komet": 1
         },
         "neutron ingot": {
-            "energiestaub": 20,
-            "sternenstaub": 20,
-            "edelstein": 15,
+            "energiestaub": 15,
+            "sternenstaub": 13,
             "neutron nugget": 10,
-            "meteorit": 7,
-            "stern": 4,
-            "juwel": 2,
-            "perle": 2
+            "edelstein": 7,
+            "meteorit": 3,
+            "stern": 2,
+            "juwel": 1,
+            "perle": 1
         },
         "infinity ingot": {
-            "energiestaub": 40,
-            "sternenstaub": 30,
-            "edelstein": 20,
-            "meteorit": 12,
+            "energiestaub": 22,
+            "sternenstaub": 18,
+            "edelstein": 12,
             "neutron nugget": 10,
-            "stern": 7,
-            "herzschuppe": 5,
-            "juwel": 3,
+            "meteorit": 4,
+            "stern": 3,
+            "herzschuppe": 3,
+            "juwel": 2,
             "riesenpilz": 2,
             "perle": 2
         },
         "infinity stein": {
-            "juwel": 10,
-            "neutron ingot": 5,
+            "juwel": 3,
+            "neutron ingot": 3,
             "infinity ingot": 3
         }
     },
@@ -99,19 +97,19 @@
         },
         "komet spitzhacke": {
             "stern spitzhacke": 1,
-            "sternenstaub": 20,
-            "edelstein": 15,
-            "riesenpilz": 8,
-            "perle": 4,
-            "komet": 3,
+            "sternenstaub": 12,
+            "edelstein": 5,
+            "riesenpilz": 3,
+            "perle": 3,
             "herzschuppe": 2,
             "juwel": 1,
+            "komet": 1,
             "griffklaue": 1
         },
         "neutron spitzhacke": {
             "komet spitzhacke": 1,
             "sternenstaub": 28,
-            "riesenpilz": 8,
+            "riesenpilz": 4,
             "stern": 3,
             "riesenperle": 3,
             "herzschuppe": 3,
@@ -124,14 +122,14 @@
             "komet spitzhacke": 1,
             "stern spitzhacke": 1,
             "pauls spitzhacke": 1,
-            "riesenpilz": 10,
-            "herzschuppe": 7,
-            "griffklaue": 6,
+            "riesenpilz": 5,
+            "herzschuppe": 5,
+            "griffklaue": 5,
             "stern": 5,
             "riesenperle": 4,
-            "juwel": 4,
-            "neutron ingot": 3,
-            "infinity ingot": 2
+            "juwel": 3,
+            "neutron ingot": 2,
+            "infinity ingot": 1
         }
     },
     "angeln":
@@ -147,24 +145,23 @@
         },
         "komet angel": {
             "stern angel": 1,
-            "sternenstaub": 18,
-            "edelstein": 12,
-            "riesenpilz": 7,
-            "perle": 3,
-            "komet": 2,
-            "herzschuppe": 2,
+            "sternenstaub": 12,
+            "edelstein": 4,
+            "riesenpilz": 3,
+            "perle": 2,
+            "herzschuppe": 1,
             "juwel": 1,
+            "komet": 1,
             "griffklaue": 1
         },
         "neutron angel": {
             "komet angel": 1,
-            "edelstein": 15,
-            "riesenpilz": 9,
-            "perle": 7,
-            "stern": 5,
-            "riesenperle": 5,
-            "herzschuppe": 4,
-            "griffklaue": 2,
+            "edelstein": 12,
+            "riesenpilz": 5,
+            "herzschuppe": 5,
+            "griffklaue": 4,
+            "stern": 4,
+            "riesenperle": 3,
             "juwel": 1,
             "neutron ingot": 1
         },
@@ -173,59 +170,14 @@
             "komet angel": 1,
             "stern angel": 1,
             "zanas angel": 1,
-            "riesenpilz": 8,
-            "herzschuppe": 8,
-            "griffklaue": 7,
-            "stern": 6,
+            "herzschuppe": 6,
+            "griffklaue": 6,
+            "stern": 5,
+            "riesenpilz": 4,
             "riesenperle": 4,
             "juwel": 3,
             "neutron ingot": 2,
             "infinity ingot": 1
-        }
-    },
-    "schwerter":
-    {
-        "stern schwert": {
-            "kayambas schwert": 1,
-            "energiestaub": 8,
-            "sternenstaub": 7,
-            "edelstein": 6,
-            "seil": 5,
-            "meteorit": 3,
-            "herzschuppe": 2
-        },
-        "komet schwert": {
-            "stern schwert": 1,
-            "sternenstaub": 31,
-            "edelstein": 25,
-            "riesenpilz": 8,
-            "perle": 5,
-            "juwel": 2,
-            "herzschuppe": 4,
-            "griffklaue": 2
-        },
-        "neutron schwert": {
-            "komet schwert": 1,
-            "riesenpilz": 21,
-            "stern": 7,
-            "herzschuppe": 5,
-            "griffklaue": 4,
-            "riesenperle": 3,
-            "juwel": 3,
-            "neutron ingot": 2
-        },
-        "infinity schwert": {
-            "neutron schwert": 1,
-            "komet schwert": 1,
-            "stern schwert": 1,
-            "kayambas schwert": 1,
-            "riesenpilz": 10,
-            "herzschuppe": 8,
-            "griffklaue": 7,
-            "riesenperle": 5,
-            "juwel": 5,
-            "neutron ingot": 4,
-            "infinity ingot": 3
         }
     }
 }

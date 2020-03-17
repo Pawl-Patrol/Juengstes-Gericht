@@ -210,7 +210,7 @@ class Bot(commands.Bot):
         u = con["upgrades"].find_one({"_id": member.id})
         if not u:
             self.set_standard_upgrades(member)
-            return
+            return 0
         mult, money, crit = convert_upgrade_levels(u['multiplier'], u['money'], u['crit'])
         inc_exp = round(random.randint(15, 25) * mult / 100)
         inc_bal = money
@@ -555,7 +555,7 @@ class Bot(commands.Bot):
                     if role:
                         await role.delete()
 
-    async def on_command_error(self, ctx, error):
+    async def oon_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.CheckFailure):
