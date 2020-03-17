@@ -139,7 +139,7 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
     @commands.cooldown(1, 3, commands.BucketType.user)
     @commands_only()
     async def repair(self, ctx, *, tool: str):
-        """Repariert ein Werkzeug"""
+        """Repariert ein Werkzeug und füllt die HP wieder auf"""
         tool = tool.lower()
         inv = con["inv_tools"].find_one({"_id": ctx.author.id, tool: {"$exists": True}})
         if inv:
@@ -148,24 +148,20 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             item = con["items"].find_one({"_id": item})
             check = con["inventory"].find_one({"_id": ctx.author.id, item["_id"]: {"$gt": 0}})
             if check:
-                dur = inv[tool]["dur"]
                 cap = inv[tool]["max"]
-                if dur == cap:
+                if inv[tool]["dur"] == cap:
                     await ctx.send(embed=discord.Embed(
                         color=discord.Color.orange(),
                         title="Dieses Tool ist schon repariert",
                         description=f"{ctx.author.mention} Du kannst dieses Tool nicht reparieren"
                     ))
                 else:
-                    dur += 5
-                    if dur > cap:
-                        dur = cap
-                    con["inv_tools"].update({"_id": ctx.author.id}, {"$set": {f"{tool}.dur": dur}})
+                    con["inv_tools"].update({"_id": ctx.author.id}, {"$set": {f"{tool}.dur": cap}})
                     remove_item(ctx.author, item["_id"], 1)
                     await ctx.send(embed=discord.Embed(
                         color=discord.Color.green(),
                         title="Reparatur erfolgreich",
-                        description=f"{ctx.author.mention} Du hast **{tool.title()}** repariert (`{inv[tool]['dur']}` -> `{dur}`)"
+                        description=f"{ctx.author.mention} Du hast **{tool.title()}** repariert (`{inv[tool]['dur']}` -> `{cap}`)"
                     ))
             else:
                 await ctx.send(embed=discord.Embed(
@@ -296,7 +292,6 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f"{ctx.author.mention} Bitte warte noch, bevor du dein Pet füttern kannst.")
 
     @pet.command()
-    @commands.cooldown(1, 5, commands.BucketType.user)
     async def wash(self, ctx):
         """Wäscht dein Pet"""
         result = await pet_action(ctx, "hygiene")
