@@ -142,6 +142,7 @@ class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 title=f":robot: ChatBot (Alpha)",
                 description=f"~ {text[:1].capitalize() + text[1:]}"
             )
+            embed.set_footer(text='Schreibe "stop" um die Sitzung zu beenden')
             return embed
         trigger = "Hallo! Wie kann ich dir helfen?"
         while True:
@@ -149,9 +150,13 @@ class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             try:
                 message = await ctx.bot.wait_for("message", check=lambda m: m.author == ctx.author and m.channel == ctx.channel, timeout=60)
             except asyncio.TimeoutError:
-                await msg.edit(embed=create_embed("Sitzung beendet."))
+                await msg.delete()
+                await ctx.send(content=f"{ctx.author.mention} Die Sitzung wurde beendet.")
                 return
             response = message.content.lower()
+            if response == "stop":
+                await ctx.send(f"{ctx.author.mention} Die Sitzung wurde beendet.")
+                return
             self.ChatBot.process_response(trigger, response)
             trigger = self.ChatBot.get_response(response)
 
