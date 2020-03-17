@@ -199,13 +199,12 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         if user is None:
             user = ctx.author
         results = con["inventory"].find_one({"_id": user.id})
-        results_tools = con["inv_tools"].find_one({"_id": user.id})
-        if results:
-            if results_tools:
-                results.update(results_tools)
-            results.pop("_id")
-        else:
-            results = results_tools
+        tools = con["inv_tools"].find_one({"_id": user.id})
+        if tools:
+            if results:
+                tools.update(results)
+            tools.pop("_id")
+            results = tools
         if not results:
             await ctx.send(embed=discord.Embed(
                 color=discord.Color.red(),
