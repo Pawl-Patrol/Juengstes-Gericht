@@ -32,24 +32,24 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             pages = len(self.recipes)
 
             def create_embed(p):
-                group = list(self.recipes)[p]
-                embed = discord.Embed(
+                element = list(self.recipes)[p]
+                new_embed = discord.Embed(
                     color=discord.Color.blue(),
-                    title=f"{group.title()} ({p + 1}/{pages})",
+                    title=f"{element.title()} ({p + 1}/{pages})",
                     description=f"Benutze `{ctx.prefix}craft item`, um ein Item zu craften.\nWenn du mehrere Items auf einmal craften möchtest, benutze `{ctx.prefix}craft item=3`\n"
                 )
-                for crafting_item, ingredients in [(a, b) for a, b in self.recipes[group].items()]:
+                for crafting_item, ingredients in [(a, b) for a, b in self.recipes[element].items()]:
                     copy = [k for k in ingredients.keys()]
-                    for ingredient in copy:
-                        if ingredient in tools:
-                            ingredients.pop(ingredient)
-                    recipe = ''
+                    for i in copy:
+                        if i in tools:
+                            ingredients.pop(i)
+                    crafting_recipe = ''
                     ing = []
-                    for ingredient, count in ingredients.items():
-                        ing.append(f"{count}x {emojis[ingredient]}")
-                    recipe += "\n> " + " ".join(ing)
-                    embed.description += f"\n**» {emojis[crafting_item]} __{crafting_item.title()}__**:{recipe}"
-                return embed
+                    for i, c in ingredients.items():
+                        ing.append(f"{c}x {emojis[i]}")
+                    crafting_recipe += "\n> " + " ".join(ing)
+                    new_embed.description += f"\n**» {emojis[crafting_item]} __{crafting_item.title()}__**:{crafting_recipe}"
+                return new_embed
 
             menu = await ctx.send(embed=create_embed(page))
             if pages > 1:
@@ -58,9 +58,9 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     await menu.add_reaction(reaction)
                 while True:
                     try:
-                        reaction, user = await ctx.bot.wait_for("reaction_add", check=lambda r,
-                                                                                             u: r.message.id == menu.id and u == ctx.author and str(
-                            r.emoji) in reactions, timeout=60)
+                        reaction, user = await ctx.bot.wait_for("reaction_add",
+                                                                check=lambda r, u: r.message.id == menu.id and u == ctx.author and str(r.emoji) in reactions,
+                                                                timeout=60)
                     except asyncio.TimeoutError:
                         await menu.clear_reactions()
                         return
@@ -112,9 +112,9 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                     msg = await ctx.send(embed=embed)
                     await msg.add_reaction("☑️")
                     try:
-                        reaction, user = await ctx.bot.wait_for("reaction_add", check=lambda r,
-                                                                                             u: r.message.id == msg.id and u == ctx.author and str(
-                            r.emoji) == "☑️", timeout=60)
+                        _, _ = await ctx.bot.wait_for("reaction_add",
+                                                      check=lambda r, u: r.message.id == msg.id and u == ctx.author and str(r.emoji) == "☑️",
+                                                      timeout=60)
                     except asyncio.TimeoutError:
                         await msg.clear_reactions()
                         return
@@ -172,33 +172,33 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         else:
             await ctx.send(embed=discord.Embed(
                 color=discord.Color.red(),
-                title="Spitzhacke nicht gefunden",
+                title="Tool nicht gefunden",
                 description=f"{ctx.author.mention} Bitte überprüfe den Namen oder stelle sicher, dass du dieses Tool besitzt"
             ))
             return
 
-
     @commands.command()
     @commands.cooldown(1, 300, commands.BucketType.user)
     @commands_only()
-    async def mine(self, ctx, *, pickaxe: str = None):
+    async def mine(self, ctx, *, pick: str = None):
         """Baue Resourcen ab und bekomme Items"""
         pickaxes = ["infinity spitzhacke", "neutron spitzhacke", "komet spitzhacke", "stern spitzhacke",
                     "pauls spitzhacke"]
-        if pickaxe:
-            tool = con["inv_tools"].find_one({"_id": ctx.author.id, pickaxe: {"$exists": True}})
-            if not tool or pickaxe not in pickaxes:
+        if pick:
+            inv = con["inv_tools"].find_one({"_id": ctx.author.id, pick: {"$exists": True}})
+            if not inv or pick not in pickaxes:
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.red(),
                     title="Spitzhacke nicht gefunden",
-                    description=f"{ctx.author.mention} Bitte überprüfe den Namen oder stelle sicher, dass du diese Spitzhacke besitzt"
+                    description=f"{ctx.author.mention} Bitte überprüfe den Namen und stelle sicher, dass du diese Spitzhacke besitzt"
                 ))
                 ctx.command.reset_cooldown(ctx)
                 return
+            pickaxe = inv[pick]
         else:
-            tool = con["inv_tools"].find_one(
+            inv = con["inv_tools"].find_one(
                 {"_id": ctx.author.id, "$or": [{pick: {"$exists": True}} for pick in pickaxes]})
-            if not tool:
+            if not inv:
                 await ctx.send(embed=discord.Embed(
                     color=discord.Color.red(),
                     title="Du besitzt keine Spitzhacke",
@@ -206,9 +206,12 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                 ))
                 ctx.command.reset_cooldown(ctx)
                 return
-        tool.pop("_id")
-        dur = list(tool.values())[0]["dur"]
-        tool = con["tools"].find_one({"_id": list(tool)[0]})
+            for pick in pickaxes:
+                pickaxe = inv.get(pick, None)
+                if pickaxe:
+                    break
+        dur = pickaxe["dur"]
+        tool = con["tools"].find_one({"_id": pick})
         emojis = {item["_id"]: item["emoji"] for item in list(con["items"].find())}
         rarity = get_tool_rarity(tool["_id"])
         amount = random.randint(2, 4)
@@ -220,7 +223,65 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         )
         if dur == 1:
             embed.description = f"Oh Nein! Deine Spitzhacke ist kaputt gegangen. Pass das nächste mal besser auf."
-            if len(tool) > 1:
+            if len(inv) > 2:
+                con["inv_tools"].update({"_id": ctx.author.id}, {"$unset": {tool['_id']: 1}})
+            else:
+                con["inv_tools"].delete_one({"_id": ctx.author.id})
+        else:
+            con["inv_tools"].update({"_id": ctx.author.id}, {"$inc": {f"{tool['_id']}.dur": -1}})
+        for item, count in loot.items():
+            embed.description += f"\n> **{count}x {item.title()}** {emojis[item]}"
+        con["inventory"].update({"_id": ctx.author.id}, {"$inc": loot}, upsert=True)
+        embed.set_footer(text=f"mit {tool['_id'].title()}")
+        embed.timestamp = datetime.datetime.utcnow()
+        await ctx.send(embed=embed)
+
+    @commands.command()
+    @commands.cooldown(1, 300, commands.BucketType.user)
+    @commands_only()
+    async def fish(self, ctx, *, rod: str = None):
+        """Angel nach Resourcen und bekomme Items"""
+        fishing_rods = ["infinity angel", "neutron angel", "komet angel", "stern angel", "zanas angel"]
+        if rod:
+            inv = con["inv_tools"].find_one({"_id": ctx.author.id, rod: {"$exists": True}})
+            if not inv or rod not in fishing_rods:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Angel nicht gefunden",
+                    description=f"{ctx.author.mention} Bitte überprüfe den Namen und stelle sicher, dass du diese Angel besitzt"
+                ))
+                ctx.command.reset_cooldown(ctx)
+                return
+            fishing_rod = inv[rod]
+        else:
+            inv = con["inv_tools"].find_one(
+                {"_id": ctx.author.id, "$or": [{rod: {"$exists": 1}} for rod in fishing_rods]})
+            if not inv:
+                await ctx.send(embed=discord.Embed(
+                    color=discord.Color.red(),
+                    title="Du besitzt keine Angel",
+                    description=f"{ctx.author.mention} Du brauchst eine Angel, um diesen Command verwenden zu können. Siehe `{ctx.prefix}shop` & `{ctx.prefix}craft`"
+                ))
+                ctx.command.reset_cooldown(ctx)
+                return
+            for rod in fishing_rods:
+                fishing_rod = inv.get(rod, None)
+                if fishing_rod:
+                    break
+        dur = fishing_rod["dur"]
+        tool = con["tools"].find_one({"_id": rod})
+        emojis = {item["_id"]: item["emoji"] for item in list(con["items"].find())}
+        rarity = get_tool_rarity(tool["_id"])
+        amount = random.randint(2, 4)
+        loot = get_random_drops(rarity, amount)
+        embed = discord.Embed(
+            color=discord.Color.green(),
+            title=f"{tool['emoji']} Du hast ein paar Items geangelt!",
+            description=""
+        )
+        if dur == 1:
+            embed.description = f"Oh Nein! Deine Angel ist kaputt gegangen. Pass das nächste mal besser auf."
+            if len(inv) > 2:
                 con["inv_tools"].update({"_id": ctx.author.id}, {"$unset": {tool['_id']: 1}})
             else:
                 con["inv_tools"].delete_one({"_id": ctx.author.id})
@@ -326,7 +387,6 @@ async def pet_action(ctx, action, cost: bool = True):
         bal = con["stats"].find_one({"_id": ctx.author.id}, {"balance": 1})["balance"]
         if bal < 50:
             raise commands.CommandError(f"{ctx.author.mention} Du brauchst mindestens **50** Dollar.")
-            return
     if stats[action] > 80:
         return False
     else:
