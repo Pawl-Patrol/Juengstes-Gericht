@@ -143,7 +143,7 @@ class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         bar = round(ship / 10) * '▰' + (10 - round(ship / 10)) * '▱'
         await ctx.send(embed=discord.Embed(color=0xFF0000, title=f':heart: Lovecalculator', description=f'[{bar}](https://www.youtube.com/watch?v=WiinVuzh4DA) **{ship}%**\n**{user1.display_name}** & **{user2.display_name}**'))
 
-    @commands.command(aliases=['chatbot'])
+    @commands.command(enabled=False, hidden=True, aliases=['chatbot'])
     @commands_only()
     @commands.cooldown(1, 60, commands.BucketType.channel)
     async def chat(self, ctx):

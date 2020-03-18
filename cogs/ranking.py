@@ -188,5 +188,6 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         con["lvlroles"].delete_many({})
         await ctx.send(f"{ctx.author.mention} Alle Levelrollen wurden erfolgreich entfernt")
 
+
 def setup(bot):
     bot.add_cog(Ranking(bot))
