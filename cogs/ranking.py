@@ -11,6 +11,7 @@ from PIL import ImageDraw
 from io import BytesIO
 import pymongo
 import asyncio
+import datetime
 
 
 class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
@@ -186,7 +187,6 @@ class Ranking(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         """Entfernt alle Rollen"""
         con["lvlroles"].delete_many({})
         await ctx.send(f"{ctx.author.mention} Alle Levelrollen wurden erfolgreich entfernt")
-
 
 def setup(bot):
     bot.add_cog(Ranking(bot))

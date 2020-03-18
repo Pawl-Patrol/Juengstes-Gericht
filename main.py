@@ -358,7 +358,7 @@ class Bot(commands.Bot):
         avatar = avatar.resize((350, 350))
         size = avatar.size[0]
         outline = 5
-        with Image.open("data/media/welcome.jpg") as img:
+        with Image.open("data/media/welcome.png") as img:
             draw = ImageDraw.Draw(img)
             pos_y = int((img.size[1]/2)-(avatar.size[0]/2)-outline)
             pos_x = img.size[0]-size-pos_y
@@ -559,7 +559,7 @@ class Bot(commands.Bot):
                     if role:
                         await role.delete()
 
-    async def on_command_error(self, ctx, error):
+    async def onn_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return
         elif isinstance(error, commands.CheckFailure):

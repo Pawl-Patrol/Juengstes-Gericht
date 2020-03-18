@@ -89,11 +89,23 @@ class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         """Sucht auf Pornhub nach dem angegebenem Text"""
         await ctx.send("https://www.pornhub.com/video/search?search=" + parse.quote_plus(text))
 
+    @commands.command(usage="hentaihaven <text>", aliases=["hh", "hentai"])
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def hentaihaven(self, ctx, *, text):
+        """Sucht auf Hentaihaven nach dem angegebenem Text"""
+        await ctx.send("https://hentaihaven.org/search/" + parse.quote_plus(text))
+
     @commands.command(usage="google <text>")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def google(self, ctx, *, text):
         """Sucht auf Pornhub nach dem angegebenem Text"""
         await ctx.send("https://www.google.com/search?q=" + parse.quote_plus(text))
+
+    @commands.command(usage="youtube <text>", aliases=["yt"])
+    @commands.cooldown(1, 10, commands.BucketType.user)
+    async def youtube(self, ctx, *, text):
+        """Sucht auf Youtube nach dem angegebenem Text"""
+        await ctx.send("https://www.youtube.com/results?search_query=" + parse.quote_plus(text))
 
     @commands.command(usage="vote <question>", aliases=["v"])
     @commands.cooldown(1, 30, commands.BucketType.channel)
@@ -124,7 +136,7 @@ class Fun(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         """Dreht deinen Text um"""
         await ctx.send(upsidedown.transform(discord.utils.escape_mentions(text)))
 
-    @commands.command(aliases=['lovecalc'])
+    @commands.command(usage="ship <user> <user>", aliases=['lovecalc'])
     async def ship(self, ctx, user1: discord.User, user2: discord.User):
         """Berechnet die Liebe zwischen 2 Personen"""
         ship = random.randint(0, 100)
