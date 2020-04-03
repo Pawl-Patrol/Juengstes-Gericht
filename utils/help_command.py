@@ -18,7 +18,7 @@ class HelpCommand(commands.HelpCommand):
         super().__init__(
             verify_checks=False,
             command_attrs={
-                'checks': [help_check],
+                'checks': [help_check()],
                 'cooldown': commands.Cooldown(1, 3, commands.BucketType.member),
                 'help': 'Gibt dir Hilfe zu den Commands',
                 'aliases': ['h', 'commands', 'cmds'],
