@@ -3,23 +3,12 @@ from discord.ext import commands
 import datetime
 
 
-def help_check():
-    async def predicate(ctx):
-        if ctx.guild.id == 680052595322388507:
-            print('test')
-            return ctx.channel.id == 680134524788801536
-        return True
-
-    return commands.check(predicate)
-
-
 class HelpCommand(commands.HelpCommand):
 
     def __init__(self):
         super().__init__(
             verify_checks=False,
             command_attrs={
-                'checks': [help_check()],
                 'cooldown': commands.Cooldown(1, 3, commands.BucketType.member),
                 'help': 'Gibt dir Hilfe zu den Commands',
                 'aliases': ['h', 'commands', 'cmds'],
@@ -37,6 +26,8 @@ class HelpCommand(commands.HelpCommand):
         ))
 
     async def send_bot_help(self, mapping):
+        if self.context.guild.id == 680052595322388507 and self.context.channel.id != 680134524788801536:
+            raise commands.CheckFailure
         embed = discord.Embed(
             color=discord.Color.blue(),
             description=f"**[Server Invite](https://discord.gg/eJ8rfpr)**\nServer Prefix: `{self.clean_prefix.replace(' ', '')}`\nFür mehr Info, nutze `{self.clean_prefix}help <command>`\n"
@@ -55,6 +46,8 @@ class HelpCommand(commands.HelpCommand):
         await self.context.send(embed=embed)
 
     async def send_cog_help(self, cog):
+        if self.context.guild.id == 680052595322388507 and self.context.channel.id != 680134524788801536:
+            raise commands.CheckFailure
         entries = await self.filter_commands(cog.get_commands(), sort=True)
         description = ''
         for command in entries:
@@ -66,6 +59,8 @@ class HelpCommand(commands.HelpCommand):
         ))
 
     async def send_group_help(self, group):
+        if self.context.guild.id == 680052595322388507 and self.context.channel.id != 680134524788801536:
+            raise commands.CheckFailure
         subcommands = group.commands
         if len(subcommands) == 0:
             return await self.send_command_help(group)
