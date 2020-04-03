@@ -1,7 +1,15 @@
 import discord
 from discord.ext import commands
-from utils.checks import commands_only
 import datetime
+
+
+def help_check():
+    async def predicate(ctx):
+        if ctx.guild.id == 680052595322388507:
+            return ctx.channel.id == 680134524788801536
+        return True
+
+    return commands.check(predicate)
 
 
 class HelpCommand(commands.HelpCommand):
@@ -10,7 +18,7 @@ class HelpCommand(commands.HelpCommand):
         super().__init__(
             verify_checks=False,
             command_attrs={
-                'checks': [commands_only],
+                'checks': [help_check],
                 'cooldown': commands.Cooldown(1, 3, commands.BucketType.member),
                 'help': 'Gibt dir Hilfe zu den Commands',
                 'aliases': ['h', 'commands', 'cmds'],
