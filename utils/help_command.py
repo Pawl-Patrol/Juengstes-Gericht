@@ -6,6 +6,7 @@ import datetime
 def help_check():
     async def predicate(ctx):
         if ctx.guild.id == 680052595322388507:
+            print('test')
             return ctx.channel.id == 680134524788801536
         return True
 
