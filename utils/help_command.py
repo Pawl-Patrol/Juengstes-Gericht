@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from utils.checks import commands_only
 import datetime
 
 
@@ -9,6 +10,7 @@ class HelpCommand(commands.HelpCommand):
         super().__init__(
             verify_checks=False,
             command_attrs={
+                'checks': [commands_only],
                 'cooldown': commands.Cooldown(1, 3, commands.BucketType.member),
                 'help': 'Gibt dir Hilfe zu den Commands',
                 'aliases': ['h', 'commands', 'cmds'],
