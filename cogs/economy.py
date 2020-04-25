@@ -40,7 +40,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
             await ctx.send(f'Seite nicht gefunden. Verfügbare Seiten: `{pages}`')
         else:
             def create_embed(page):
-                embed = discord.Embed(color=0x983233, title=':convenience_store: Shop', description=f'Kaufe ein Item mit `{ctx.prefix}buy <item> [amount]`')
+                embed = discord.Embed(color=0x983233, title=':convenience_store: Shop', description=f'Kaufe ein Item mit `{ctx.prefix}buy item=amount`')
                 embed.set_footer(text=f"Seite {page} von {pages}")
                 for item in shop_items[(page - 1) * 5:(page - 1) * 5 + 5]:
                     embed.description += f"\n\n**{item['emoji']} {item['_id'].title()}: :inbox_tray: ${item['buy']} | :outbox_tray: ${item['sell']}**\n➼ {item['description']}"
@@ -80,7 +80,7 @@ class Economy(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
         elif len(args) != 2:
             await ctx.send(f"{ctx.author.mention} Wenn du mehrere Items auf einmal kaufen möchtest, benutze `{ctx.prefix}buy item=3`")
             return
-        arg = args[0]
+        arg = args[0].lower()
         amount = int(args[1])
         item = con["items"].find_one({"_id": arg, "buy": {"$gt": 0}})
         tool = False if item else True
