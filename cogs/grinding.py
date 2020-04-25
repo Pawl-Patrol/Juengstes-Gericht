@@ -119,7 +119,8 @@ class Grinding(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
                         await msg.clear_reactions()
                         return
                     if item.lower() in tools:
-                        con["inv_tools"].update({"_id": ctx.author.id}, {"$inc": {item.lower(): 1}}, upsert=True)
+                        dur = con["tools"].find({"_id": item.lower()})
+                        con["inv_tools"].update({"_id": ctx.author.id}, {"$inc": {item.lower(): {"dur": dur, "max": dur}}}, upsert=True)
                     else:
                         inc[item.lower()] = amount
                     if unset:
