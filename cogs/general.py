@@ -76,7 +76,7 @@ class General(commands.Cog, command_attrs=dict(cooldown_after_parsing=True)):
 
     @commands.group(usage='customrole [create|delete|name|color|random]', aliases=["crole"], case_insensitive=True)
     @commands_only()
-    @commands.has_role('Nitro Booster')
+    @commands.has_any_role(['Nitro Booster', 'Eventrolle'])
     async def customrole(self, ctx: commands.Context):
         """Commands für eine eigene Rolle"""
         if ctx.invoked_subcommand is None:
