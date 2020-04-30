@@ -290,6 +290,8 @@ class Bot(commands.Bot):
                 for member in channel.members:
                     if member.bot or member.voice.afk:
                         continue
+                    if channel.id == self.config["wartezimmer"]:
+                        continue
                     stats = con["stats"].find_one({"_id": member.id})
                     level, xp, cap = lvlcalc(stats["total_xp"])
                     added_xp = await self.add_xp(member, exp_type="voice_xp")
