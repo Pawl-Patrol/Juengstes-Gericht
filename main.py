@@ -107,7 +107,6 @@ class Bot(commands.Bot):
         if message.content.lower().startswith("!d bump"):
             self.last_bump = ctx.author.id
         if (int(time.time()) - self.last_event) > 600:
-            # EVENT
             chance = random.randint(0, 100)
             if chance == 0:
                 await self.guess_event(ctx.channel)
